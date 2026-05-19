@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>YOU ARE INSIDE MY HEAD NOW — TheBenjaminRodriguezWebsite</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="floating-pages.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #efeeec;
+  }
+  body {
+    color: #0c0c0c;
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  .bgtype {
+    position: fixed;
+    top: 24px;
+    left: 28px;
+    right: 28px;
+    bottom: 58px;        /* leave room for license */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    padding: 0;
+  }
+  .bgtype .line {
+    display: block;
+    width: 100%;
+    height: auto;
+    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
+    font-weight: 900;
+    /* Base font-size — the scaleX transform will stretch each line
+       to fill the container width exactly, regardless of viewport. */
+    font-size: clamp(120px, 30vh, 40vw);
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    color: #000000;           /* absolute black */
+    white-space: nowrap;
+    flex: 0 0 auto;
+    margin: 0;
+    overflow: visible;
+  }
+  /* Inner span is what we scale — keeps line box height stable. */
+  .bgtype .line .t {
+    display: inline-block;
+    transform-origin: left center;
+    will-change: transform;
+  }
+
+  /* ---------- MOBILE MARQUEE (single LED-sign line) ---------- */
+  .bgtype-marquee {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    line-height: 0.88;
+  }
+  .bgtype-marquee .track {
+    display: flex;
+    white-space: nowrap;
+    width: max-content;
+    animation: bgmarquee 22s linear infinite;
+    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
+    font-weight: 900;
+    font-size: 38vh;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    color: #000;
+  }
+  .bgtype-marquee .track span {
+    display: inline-block;
+    padding-right: 0.4em;
+  }
+  @keyframes bgmarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  @media (max-width: 720px) {
+    .bgtype { display: none; }
+    .bgtype-marquee { display: block; }
+  }
+
+  /* ---------- SCENE CANVAS ---------- */
+  #scene {
+    position: fixed; inset: 0;
+    z-index: 3;
+    width: 100%; height: 100%;
+    cursor: grab;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    touch-action: none;
+  }
+  #scene.dragging { cursor: grabbing; }
+
+  /* ---------- FACE LABELS ---------- */
+  #labels {
+    position: fixed; inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .face-label {
+    position: absolute;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(20,20,20,0.0);                  /* hidden by default */
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    transition:
+      opacity 320ms cubic-bezier(.2,.7,.2,1),
+      letter-spacing 320ms cubic-bezier(.2,.7,.2,1),
+      font-size 320ms cubic-bezier(.2,.7,.2,1),
+      color 240ms ease,
+      text-shadow 240ms ease;
+    text-shadow: 0 0 1px rgba(255,255,255,0.4);
+    opacity: 0.0;
+  }
+  .face-label.visible { opacity: 0.55; color: rgba(245,240,235,0.95); }
+  .face-label.placeholder.visible { opacity: 0.35; color: rgba(255,255,255,0.7); letter-spacing: 0.16em; }
+  .face-label.active {
+    opacity: 1 !important;
+    color: #ffffff;
+    font-size: 22px;
+    letter-spacing: 0.32em;
+    text-shadow:
+      0 0 2px rgba(0,0,0,0.85),
+      0 0 12px rgba(0,0,0,0.45),
+      0 1px 0  rgba(0,0,0,0.7);
+    font-weight: 900;
+  }
+
+  /* ---------- LICENSE (only chrome) ---------- */
+  .license {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 8;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: #0c0c0c;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* ---------- LOADER (temporary) ---------- */
+  #loader {
+    position: fixed; inset: 0;
+    z-index: 11;
+    background: #efeeec;
+    display: flex; align-items: center; justify-content: center;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: #0c0c0c;
+    transition: opacity 600ms ease;
+  }
+  #loader.gone { opacity: 0; pointer-events: none; }
+
+  /* ---------- FOCUS / ENTER overlay ---------- */
+  #focus-overlay {
+    position: fixed; inset: 0;
+    z-index: 9;
+    pointer-events: none;
+    background: rgba(239,238,236,0);
+    transition: background 600ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #focus-overlay.on { background: rgba(239,238,236,0.85); pointer-events: auto; }
+  #focus-overlay .panel {
+    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", sans-serif;
+    font-size: clamp(80px, 22vh, 40vw);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #0a0a0a;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 500ms ease, transform 700ms cubic-bezier(.2,.7,.2,1);
+    white-space: nowrap;
+  }
+  #focus-overlay.on .panel { opacity: 0.95; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- 1. Background Impact type — force-justified to viewport margins -->
+<div class="bgtype" aria-hidden="true">
+  <div class="line l1"><span class="t">YOU ARE</span></div>
+  <div class="line l2"><span class="t">INSIDE</span></div>
+  <div class="line l3"><span class="t">MY HEAD</span></div>
+</div>
+
+<!-- 1b. Mobile marquee — single LED-sign line that scrolls -->
+<div class="bgtype-marquee" aria-hidden="true">
+  <div class="track">
+    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+  </div>
+</div>
+
+<!-- 2. The 3D object -->
+<canvas id="scene"></canvas>
+<div id="labels"></div>
+
+<!-- 3. License (only chrome) -->
+<div class="license">® 2026 TheBenjaminRodriguezWebsite.com all rights reserved.</div>
+
+<div id="focus-overlay">
+  <div class="panel" id="focus-panel"></div>
+</div>
+
+<div id="loader">LOADING</div>
+
+<!-- Floating editorial pages root — populated by floating-pages.js -->
+<div id="fp-root"></div>
+
+<script>
+  // Force-justify each background line to the full container width
+  // via scaleX transform. Recomputed on resize and after fonts load.
+  (function () {
+    function fitJustified() {
+      var lines = document.querySelectorAll('.bgtype .line');
+      lines.forEach(function (line) {
+        var inner = line.querySelector('.t');
+        if (!inner) return;
+        inner.style.transform = 'scaleX(1)';
+        var natural = inner.getBoundingClientRect().width;
+        var target  = line.getBoundingClientRect().width;
+        if (natural > 0 && target > 0) {
+          var s = target / natural;
+          inner.style.transform = 'scaleX(' + s.toFixed(4) + ')';
+        }
+      });
+    }
+    window.addEventListener('resize', fitJustified);
+    window.addEventListener('load', fitJustified);
+    document.addEventListener('DOMContentLoaded', fitJustified);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(fitJustified);
+    }
+    // Belt-and-braces: re-run a couple of times after load in case
+    // metrics shift slightly when Impact (system) finishes resolving.
+    setTimeout(fitJustified, 80);
+    setTimeout(fitJustified, 320);
+  })();
+</script>
+
+<script src="https://unpkg.com/three@0.156.1/build/three.min.js"></script>
+<script src="floating-pages.js"></script>
+<script src="floating-pages-content.js"></script>
+<script src="head-scene.js"></script>
+
+</body>
+</html>

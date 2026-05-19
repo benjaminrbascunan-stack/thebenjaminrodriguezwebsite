@@ -1,0 +1,354 @@
+{
+  "_meta": {
+    "version": 2,
+    "updated": "2026-05-19",
+    "site": "TheBenjaminRodriguezWebsite"
+  },
+  "about": {
+    "name": "BENJAMIN RODRIGUEZ",
+    "bio": "systems thinker, builder and creative director working between industrial design, second-hand designer fashion, retail direction, automation, ai workflows, 3d modeling, web experimentation and underground internet culture.",
+    "note_a": "this site is not a portfolio. it is a personal operating system — an experimental archive where every object and obsession is treated as a unit of authorship.",
+    "note_b": "each polygon of the head is a doorway. each doorway leads into a working room of the practice.",
+    "note_c": "the interior will keep growing — slowly, on its own clock.",
+    "studio_lines": [
+      "the benjamin rodriguez studio",
+      "by appointment",
+      "miami ↔ new york city"
+    ],
+    "contact_lines": [
+      "studio +1 305 000 0000",
+      "mobile +1 305 000 0000",
+      "info@thebenjaminrodriguezwebsite.com"
+    ],
+    "social_links": [
+      {
+        "label": "instagram",
+        "url": ""
+      },
+      {
+        "label": "are.na",
+        "url": ""
+      },
+      {
+        "label": "vimeo",
+        "url": ""
+      },
+      {
+        "label": "tumblr",
+        "url": ""
+      }
+    ],
+    "tags": [
+      "art direction",
+      "3d visuals",
+      "industrial design",
+      "retail systems",
+      "automation",
+      "3d scans"
+    ],
+    "portrait_image": ""
+  },
+  "sound": {
+    "intro": "ambient pieces, field recordings, hardware studies, voice work. some published, some not.",
+    "notes": "audio recorded 24-bit, 48 khz. mixes published quarterly.",
+    "cover_image": "",
+    "tracks": [
+      {
+        "id": "M-01",
+        "title": "studio mix n° 11 — ambient",
+        "duration": "64:00",
+        "type": "MIX",
+        "url": ""
+      },
+      {
+        "id": "M-02",
+        "title": "studio mix n° 10 — ambient",
+        "duration": "51:00",
+        "type": "MIX",
+        "url": ""
+      },
+      {
+        "id": "F-01",
+        "title": "beach & freeway, miami",
+        "duration": "28:00",
+        "type": "FIELD",
+        "url": ""
+      },
+      {
+        "id": "F-02",
+        "title": "construction site, brooklyn",
+        "duration": "19:00",
+        "type": "FIELD",
+        "url": ""
+      },
+      {
+        "id": "H-01",
+        "title": "drone study, modular",
+        "duration": "33:00",
+        "type": "HARDWARE",
+        "url": ""
+      },
+      {
+        "id": "H-02",
+        "title": "eurorack sketches",
+        "duration": "22:00",
+        "type": "HARDWARE",
+        "url": ""
+      }
+    ]
+  },
+  "video": {
+    "intro": "short films, loops, motion studies, scan reels.",
+    "films": [
+      {
+        "id": "FILM-01",
+        "title": "film 01",
+        "duration": "02:14",
+        "year": "2026",
+        "embed_url": "",
+        "thumbnail": ""
+      },
+      {
+        "id": "FILM-02",
+        "title": "film 02",
+        "duration": "03:48",
+        "year": "2025",
+        "embed_url": "",
+        "thumbnail": ""
+      },
+      {
+        "id": "LOOP-01",
+        "title": "loop 03",
+        "duration": "00:48",
+        "year": "2025",
+        "embed_url": "",
+        "thumbnail": ""
+      },
+      {
+        "id": "SCAN-01",
+        "title": "scan reel",
+        "duration": "01:32",
+        "year": "2026",
+        "embed_url": "",
+        "thumbnail": ""
+      }
+    ]
+  },
+  "objects": {
+    "intro": "physical objects collected, made or rescued. garments, footwear, optical media, hardware, ephemera.",
+    "notes": "each object is catalogued by acquisition date, origin and condition.",
+    "count": "240+",
+    "items": [
+      {
+        "id": "OB-01",
+        "title": "ob-01",
+        "year": "",
+        "category": "GARMENT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-02",
+        "title": "ob-02",
+        "year": "",
+        "category": "GARMENT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-03",
+        "title": "ob-03",
+        "year": "",
+        "category": "ARTIFACT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-04",
+        "title": "ob-04",
+        "year": "",
+        "category": "FOOTWEAR",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-05",
+        "title": "ob-05",
+        "year": "",
+        "category": "HARDWARE",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-06",
+        "title": "ob-06",
+        "year": "",
+        "category": "PRINT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-07",
+        "title": "ob-07",
+        "year": "",
+        "category": "ARTIFACT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-08",
+        "title": "ob-08",
+        "year": "",
+        "category": "GARMENT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "OB-09",
+        "title": "ob-09",
+        "year": "",
+        "category": "DOCUMENT",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      }
+    ]
+  },
+  "dummies": {
+    "intro": "mannequins, body forms, half-bodies, torsos, heads. the silent collaborators of the retail floor and the studio set.",
+    "notes": "each dummy is photographed front, three-quarter and back.",
+    "count": "18",
+    "items": [
+      {
+        "id": "Kerastase ",
+        "title": "dummy 01 — torso",
+        "form": "prueba 1 ",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "DM-02",
+        "title": "dummy 02 — full body",
+        "form": "full body",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "DM-03",
+        "title": "dummy 03 — head",
+        "form": "head",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "DM-04",
+        "title": "dummy 04 — half-body",
+        "form": "half-body",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "DM-05",
+        "title": "dummy 05 — leg form",
+        "form": "leg form",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      },
+      {
+        "id": "DM-06",
+        "title": "dummy 06 — hand",
+        "form": "hand",
+        "image": "",
+        "model_3d": "",
+        "notes": ""
+      }
+    ]
+  },
+  "automatization": {
+    "intro": "quiet systems that run on their own. retail floor automation, ai pipelines, inventory loops, scraping, scanning, syncing.",
+    "active_count": "18",
+    "uptime": "99.94%",
+    "systems": [
+      {
+        "name": "RETAIL FLOOR",
+        "desc": "inventory, restock and pos sync across 4 city locations. built to fail loudly when it matters and silently when it doesn't.",
+        "status": "ACTIVE",
+        "uptime": "99.94%",
+        "diagram": ""
+      },
+      {
+        "name": "AI PIPELINES",
+        "desc": "image tagging, description generation, transcription, internal search across the living archive. ~3.2m tokens / day.",
+        "status": "ACTIVE",
+        "uptime": "99.89%",
+        "diagram": ""
+      },
+      {
+        "name": "SCRAPING",
+        "desc": "continuous scrapes of auction houses, secondary markets and archive sites — feeds the objects index.",
+        "status": "ACTIVE",
+        "uptime": "98.72%",
+        "diagram": ""
+      },
+      {
+        "name": "SCANNING",
+        "desc": "photogrammetry and flatbed scanning rigs, batched and queued. pipeline output: media / scans.",
+        "status": "ACTIVE",
+        "uptime": "99.10%",
+        "diagram": ""
+      }
+    ]
+  },
+  "web": {
+    "intro": "experimental websites, micro-sites, web toys, scrapers, interfaces, archives. the internet as a working surface.",
+    "stack": "vanilla js, three.js, webgl, canvas, scraping pipelines, ai gateways, static hosting, edge functions.",
+    "notes": "most experiments live for a season, then become screenshots.",
+    "projects": [
+      {
+        "id": "W-01",
+        "title": "this site",
+        "desc": "living archive, ongoing",
+        "year": "2026",
+        "url": "",
+        "screenshot": ""
+      },
+      {
+        "id": "W-02",
+        "title": "object archive",
+        "desc": "ongoing",
+        "year": "2025",
+        "url": "",
+        "screenshot": ""
+      },
+      {
+        "id": "W-03",
+        "title": "retail os dashboard",
+        "desc": "internal tool",
+        "year": "2025",
+        "url": "",
+        "screenshot": ""
+      },
+      {
+        "id": "W-04",
+        "title": "scrape feed reader",
+        "desc": "personal tool",
+        "year": "2025",
+        "url": "",
+        "screenshot": ""
+      }
+    ]
+  }
+}

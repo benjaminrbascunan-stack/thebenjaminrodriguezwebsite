@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ADMIN — TheBenjaminRodriguezWebsite</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #000000;
+    --muted: #888888;
+    --light: #f5f5f5;
+    --border: #000000;
+    --border-light: #e0e0e0;
+    --font: Arial, Helvetica, sans-serif;
+    --mono: "Courier New", Courier, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #fff; color: #000; font-family: var(--font); font-size: 14px; line-height: 1.5; }
+
+  /* LOGIN */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 100; background: #fff;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; padding: 48px;
+  }
+  #login-screen h1 {
+    font-family: var(--font); font-weight: 700;
+    font-size: clamp(48px, 9vw, 120px); line-height: 0.9;
+    letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 48px;
+  }
+  .login-box { display: flex; flex-direction: column; width: 360px; }
+  .login-box input {
+    background: #fff; border: 2px solid #000; border-bottom: none;
+    color: #000; font-family: var(--font); font-size: 14px; font-weight: 700;
+    padding: 14px 16px; outline: none; width: 100%;
+  }
+  .login-box input::placeholder { color: #ccc; font-weight: 400; }
+  .btn-login {
+    background: #000; color: #fff; border: 2px solid #000;
+    font-family: var(--font); font-weight: 700; font-size: 13px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 14px 24px; cursor: pointer; text-align: left;
+    transition: background 120ms, color 120ms;
+  }
+  .btn-login:hover { background: #fff; color: #000; }
+  #login-error { font-weight: 700; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 12px; display: none; }
+  .login-hint { position: fixed; bottom: 24px; right: 48px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: #ccc; text-transform: uppercase; }
+
+  /* APP */
+  #app { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
+  #app.visible { display: flex; }
+
+  /* Topbar */
+  .topbar { display: flex; align-items: stretch; height: 52px; border-bottom: 2px solid #000; flex: 0 0 auto; }
+  .topbar-brand { display: flex; align-items: center; padding: 0 24px; border-right: 2px solid #000; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; flex: 0 0 auto; }
+  .topbar-status { display: flex; align-items: center; padding: 0 24px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; flex: 1; }
+  .topbar-status.dirty { color: #000; font-weight: 700; }
+  .topbar-actions { display: flex; align-items: stretch; }
+  .tbtn { display: flex; align-items: center; padding: 0 22px; border-left: 2px solid #000; border-right: none; border-top: none; border-bottom: none; background: #fff; color: #000; font-family: var(--font); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: background 120ms, color 120ms; }
+  .tbtn:hover { background: #000; color: #fff; }
+  .tbtn.primary { background: #000; color: #fff; }
+  .tbtn.primary:hover { background: #333; }
+
+  /* Body */
+  .body { display: flex; flex: 1 1 auto; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 200px; flex: 0 0 200px; border-right: 2px solid #000; overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar-label { padding: 16px 20px 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border-light); }
+  .sidebar-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border-light); cursor: pointer; font-weight: 700; font-size: 13px; text-transform: uppercase; color: var(--muted); transition: color 120ms, background 120ms; user-select: none; }
+  .sidebar-item:hover { color: #000; background: var(--light); }
+  .sidebar-item.active { color: #000; background: var(--light); }
+  .sidebar-item .arrow { font-size: 11px; opacity: 0; }
+  .sidebar-item.active .arrow, .sidebar-item:hover .arrow { opacity: 1; }
+
+  /* Main */
+  .main { flex: 1 1 auto; overflow-y: auto; }
+  .section-panel { display: none; }
+  .section-panel.active { display: block; }
+
+  .section-header { padding: 32px 48px 24px; border-bottom: 2px solid #000; }
+  .section-title { font-weight: 700; font-size: clamp(28px, 4vw, 52px); letter-spacing: -0.02em; text-transform: uppercase; line-height: 1; }
+  .section-sub { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+
+  .section-body { padding: 36px 48px 80px; }
+
+  .divider { font-family: var(--mono); font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); padding: 24px 0 10px; border-top: 1px solid var(--border-light); margin-top: 28px; }
+  .divider:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+
+  /* Fields */
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .field input, .field textarea, .field select { width: 100%; background: #fff; border: 2px solid #000; color: #000; font-family: var(--font); font-size: 14px; padding: 10px 14px; outline: none; transition: background 120ms; appearance: none; }
+  .field input:focus, .field textarea:focus, .field select:focus { background: var(--light); }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .field-hint { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .card { border: 2px solid #000; margin-bottom: 2px; }
+  .card-header { display: flex; align-items: center; gap: 14px; padding: 13px 18px; cursor: pointer; user-select: none; background: #fff; transition: background 120ms; }
+  .card-header:hover { background: var(--light); }
+  .card-id { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--muted); flex: 0 0 64px; text-transform: uppercase; }
+  .card-title { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; flex: 1; }
+  .card-toggle { font-size: 18px; color: var(--muted); flex: 0 0 auto; transition: transform 180ms; font-weight: 300; }
+  .card-header.is-open .card-toggle { transform: rotate(45deg); }
+  .card-del { font-family: var(--font); font-weight: 700; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: none; border: 2px solid #000; color: #000; padding: 5px 10px; cursor: pointer; flex: 0 0 auto; transition: background 120ms, color 120ms; }
+  .card-del:hover { background: #000; color: #fff; }
+  .card-body { display: none; padding: 24px 20px; border-top: 2px solid #000; background: var(--light); }
+  .card-body.open { display: block; }
+
+  .add-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 18px; background: #fff; border: 2px solid #000; border-top: none; cursor: pointer; font-family: var(--font); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); transition: background 120ms, color 120ms; margin-bottom: 0; }
+  .add-btn:hover { background: #000; color: #fff; }
+  .add-btn::before { content: "+"; font-size: 18px; line-height: 1; font-weight: 300; }
+
+  .info-box { border-left: 4px solid #000; padding: 14px 18px; margin-bottom: 24px; background: var(--light); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; line-height: 1.8; color: #000; }
+  code { background: #fff; border: 1px solid var(--border-light); padding: 1px 5px; font-family: var(--mono); font-size: 10.5px; }
+
+  .empty { padding: 28px 0; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); border: 2px solid #000; text-align: center; margin-bottom: 2px; }
+
+  #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(12px); background: #000; color: #fff; font-family: var(--font); font-weight: 700; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 28px; opacity: 0; transition: opacity 250ms, transform 250ms; pointer-events: none; z-index: 200; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1>Benjamin<br>Rodriguez<br>— Admin</h1>
+  <div class="login-box">
+    <input type="password" id="pwd-input" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn-login" onclick="attemptLogin()">Entrar →</button>
+    <div id="login-error">Contraseña incorrecta</div>
+  </div>
+  <div class="login-hint">thebenjaminrodriguezwebsite.com · admin</div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">TBR Admin</div>
+    <div class="topbar-status" id="status-bar">Cargando...</div>
+    <div class="topbar-actions">
+      <button class="tbtn" onclick="previewSite()">↗ Ver sitio</button>
+      <button class="tbtn primary" onclick="saveAndDownload()">↓ Guardar JSON</button>
+      <button class="tbtn" onclick="logout()">Salir</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sidebar-label">Secciones</div>
+      <div class="sidebar-item active" onclick="sw('about',this)">About <span class="arrow">→</span></div>
+      <div class="sidebar-item" onclick="sw('sound',this)">Sound <span class="arrow">→</span></div>
+      <div class="sidebar-item" onclick="sw('video',this)">Video <span class="arrow">→</span></div>
+      <div class="sidebar-item" onclick="sw('objects',this)">Objects <span class="arrow">→</span></div>
+      <div class="sidebar-item" onclick="sw('dummies',this)">Dummies <span class="arrow">→</span></div>
+      <div class="sidebar-item" onclick="sw('automatization',this)">Automatization <span class="arrow">→</span></div>
+      <div class="sidebar-item" onclick="sw('web',this)">Web <span class="arrow">→</span></div>
+    </div>
+    <div class="main">
+
+      <!-- ABOUT -->
+      <div class="section-panel active" id="panel-about">
+        <div class="section-header"><div class="section-title">About</div><div class="section-sub">Identidad, bio, contacto</div></div>
+        <div class="section-body">
+          <div class="divider">Identidad</div>
+          <div class="grid-2">
+            <div class="field"><label>Nombre</label><input id="about-name" type="text" oninput="dirty()"></div>
+            <div class="field"><label>Imagen retrato (path)</label><input id="about-portrait" type="text" placeholder="assets/portrait.jpg" oninput="dirty()"></div>
+          </div>
+          <div class="field"><label>Bio</label><textarea id="about-bio" rows="3" oninput="dirty()"></textarea></div>
+          <div class="divider">Notas del sitio</div>
+          <div class="field"><label>Nota A</label><textarea id="about-note-a" rows="2" oninput="dirty()"></textarea></div>
+          <div class="field"><label>Nota B</label><textarea id="about-note-b" rows="2" oninput="dirty()"></textarea></div>
+          <div class="field"><label>Nota C</label><textarea id="about-note-c" rows="2" oninput="dirty()"></textarea></div>
+          <div class="divider">Estudio y contacto</div>
+          <div class="grid-2">
+            <div class="field"><label>Líneas del estudio (una por línea)</label><textarea id="about-studio" rows="4" oninput="dirty()"></textarea></div>
+            <div class="field"><label>Líneas de contacto (una por línea)</label><textarea id="about-contact" rows="4" oninput="dirty()"></textarea></div>
+          </div>
+          <div class="divider">Redes sociales</div>
+          <div id="socials-list"></div>
+          <button class="add-btn" onclick="addSocial()">Agregar red social</button>
+          <div class="divider">Tags / disciplinas</div>
+          <div class="field"><label>Tags separados por comas</label><input id="about-tags" type="text" placeholder="art direction, 3d visuals, industrial design" oninput="dirty()"></div>
+        </div>
+      </div>
+
+      <!-- SOUND -->
+      <div class="section-panel" id="panel-sound">
+        <div class="section-header"><div class="section-title">Sound</div><div class="section-sub">Mixes, field recordings, hardware</div></div>
+        <div class="section-body">
+          <div class="field"><label>Intro</label><textarea id="sound-intro" rows="2" oninput="dirty()"></textarea></div>
+          <div class="field"><label>Notas</label><textarea id="sound-notes" rows="2" oninput="dirty()"></textarea></div>
+          <div class="field"><label>Cover image (path)</label><input id="sound-cover" type="text" placeholder="assets/sound-cover.jpg" oninput="dirty()"></div>
+          <div class="divider">Tracks</div>
+          <div id="sound-list"></div>
+          <button class="add-btn" onclick="addTrack()">Agregar track</button>
+        </div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="section-panel" id="panel-video">
+        <div class="section-header"><div class="section-title">Video</div><div class="section-sub">Films, loops — embeds de Vimeo / YouTube</div></div>
+        <div class="section-body">
+          <div class="field"><label>Intro</label><textarea id="video-intro" rows="2" oninput="dirty()"></textarea></div>
+          <div class="info-box">
+            <strong>Vimeo:</strong> <code>https://player.vimeo.com/video/ID</code><br>
+            <strong>YouTube:</strong> <code>https://www.youtube.com/embed/ID</code>
+          </div>
+          <div id="video-list"></div>
+          <button class="add-btn" onclick="addFilm()">Agregar film</button>
+        </div>
+      </div>
+
+      <!-- OBJECTS -->
+      <div class="section-panel" id="panel-objects">
+        <div class="section-header"><div class="section-title">Objects</div><div class="section-sub">Archivo físico — objetos, prendas, reliquias</div></div>
+        <div class="section-body">
+          <div class="info-box">
+            <strong>Imágenes →</strong> sube a <code>assets/objects/</code> y escribe el path: <code>assets/objects/nombre.jpg</code><br>
+            <strong>Modelos 3D →</strong> exporta como <code>.glb</code> desde Blender, sube a <code>assets/models/</code>: <code>assets/models/nombre.glb</code>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Intro</label><textarea id="objects-intro" rows="2" oninput="dirty()"></textarea></div>
+            <div class="field"><label>Notas</label><textarea id="objects-notes" rows="2" oninput="dirty()"></textarea></div>
+          </div>
+          <div class="field"><label>Count (ej: 240+)</label><input id="objects-count" type="text" oninput="dirty()"></div>
+          <div class="divider">Items</div>
+          <div id="objects-list"></div>
+          <button class="add-btn" onclick="addObject()">Agregar objeto</button>
+        </div>
+      </div>
+
+      <!-- DUMMIES -->
+      <div class="section-panel" id="panel-dummies">
+        <div class="section-header"><div class="section-title">Dummies</div><div class="section-sub">Maniquíes, formas corporales, torsos, cabezas</div></div>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="field"><label>Intro</label><textarea id="dummies-intro" rows="2" oninput="dirty()"></textarea></div>
+            <div class="field"><label>Notas</label><textarea id="dummies-notes" rows="2" oninput="dirty()"></textarea></div>
+          </div>
+          <div class="field"><label>Count (ej: 18)</label><input id="dummies-count" type="text" oninput="dirty()"></div>
+          <div class="divider">Items</div>
+          <div id="dummies-list"></div>
+          <button class="add-btn" onclick="addDummy()">Agregar dummy</button>
+        </div>
+      </div>
+
+      <!-- AUTOMATIZATION -->
+      <div class="section-panel" id="panel-automatization">
+        <div class="section-header"><div class="section-title">Automatization</div><div class="section-sub">Pipelines, workflows, sistemas activos</div></div>
+        <div class="section-body">
+          <div class="field"><label>Intro</label><textarea id="auto-intro" rows="2" oninput="dirty()"></textarea></div>
+          <div class="grid-2">
+            <div class="field"><label>Nº workflows activos</label><input id="auto-count" type="text" oninput="dirty()"></div>
+            <div class="field"><label>Uptime</label><input id="auto-uptime" type="text" placeholder="99.94%" oninput="dirty()"></div>
+          </div>
+          <div class="divider">Sistemas</div>
+          <div id="auto-list"></div>
+          <button class="add-btn" onclick="addSystem()">Agregar sistema</button>
+        </div>
+      </div>
+
+      <!-- WEB -->
+      <div class="section-panel" id="panel-web">
+        <div class="section-header"><div class="section-title">Web</div><div class="section-sub">Experimentos, micro-sitios, herramientas</div></div>
+        <div class="section-body">
+          <div class="field"><label>Intro</label><textarea id="web-intro" rows="2" oninput="dirty()"></textarea></div>
+          <div class="field"><label>Stack</label><textarea id="web-stack" rows="2" oninput="dirty()"></textarea></div>
+          <div class="field"><label>Notas</label><textarea id="web-notes" rows="2" oninput="dirty()"></textarea></div>
+          <div class="divider">Proyectos</div>
+          <div id="web-list"></div>
+          <button class="add-btn" onclick="addWebProject()">Agregar proyecto</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const PASSWORD = "$14Febero";
+let data = null, _dirty = false;
+
+// LOGIN
+document.getElementById("pwd-input").addEventListener("keydown", e => { if (e.key === "Enter") attemptLogin(); });
+function attemptLogin() {
+  if (document.getElementById("pwd-input").value === PASSWORD) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").classList.add("visible");
+    load();
+  } else {
+    document.getElementById("login-error").style.display = "block";
+    document.getElementById("pwd-input").value = "";
+    document.getElementById("pwd-input").focus();
+  }
+}
+function logout() { if (_dirty && !confirm("Cambios sin guardar. ¿Salir?")) return; location.reload(); }
+
+// LOAD
+function load() {
+  fetch("content.json?" + Date.now()).then(r => r.json()).then(j => { data = j; renderAll(); setStatus("Listo · " + ts(), ""); })
+    .catch(() => { data = blankData(); renderAll(); dirty(); setStatus("Nuevo archivo", "dirty"); });
+}
+
+function blankData() {
+  return { _meta: { version: 1, updated: today(), site: "TheBenjaminRodriguezWebsite" },
+    about: { name: "", bio: "", note_a: "", note_b: "", note_c: "", studio_lines: [], contact_lines: [], social_links: [], tags: [], portrait_image: "" },
+    sound: { intro: "", notes: "", cover_image: "", tracks: [] },
+    video: { intro: "", films: [] },
+    objects: { intro: "", notes: "", count: "", items: [] },
+    dummies: { intro: "", notes: "", count: "", items: [] },
+    automatization: { intro: "", active_count: "", uptime: "", systems: [] },
+    web: { intro: "", stack: "", notes: "", projects: [] }
+  };
+}
+
+// RENDER ALL
+function renderAll() {
+  const a = data.about;
+  g("about-name").value = a.name || "";
+  g("about-portrait").value = a.portrait_image || "";
+  g("about-bio").value = a.bio || "";
+  g("about-note-a").value = a.note_a || "";
+  g("about-note-b").value = a.note_b || "";
+  g("about-note-c").value = a.note_c || "";
+  g("about-studio").value = (a.studio_lines || []).join("\n");
+  g("about-contact").value = (a.contact_lines || []).join("\n");
+  g("about-tags").value = (a.tags || []).join(", ");
+  renderList("socials-list", a.social_links || [], makeSocialCard);
+
+  const s = data.sound;
+  g("sound-intro").value = s.intro || ""; g("sound-notes").value = s.notes || ""; g("sound-cover").value = s.cover_image || "";
+  renderList("sound-list", s.tracks || [], makeTrackCard);
+
+  g("video-intro").value = data.video.intro || "";
+  renderList("video-list", data.video.films || [], makeFilmCard);
+
+  const ob = data.objects;
+  g("objects-intro").value = ob.intro || ""; g("objects-notes").value = ob.notes || ""; g("objects-count").value = ob.count || "";
+  renderList("objects-list", ob.items || [], makeObjectCard);
+
+  const dm = data.dummies;
+  g("dummies-intro").value = dm.intro || ""; g("dummies-notes").value = dm.notes || ""; g("dummies-count").value = dm.count || "";
+  renderList("dummies-list", dm.items || [], makeDummyCard);
+
+  const au = data.automatization;
+  g("auto-intro").value = au.intro || ""; g("auto-count").value = au.active_count || ""; g("auto-uptime").value = au.uptime || "";
+  renderList("auto-list", au.systems || [], makeSystemCard);
+
+  const wb = data.web;
+  g("web-intro").value = wb.intro || ""; g("web-stack").value = wb.stack || ""; g("web-notes").value = wb.notes || "";
+  renderList("web-list", wb.projects || [], makeWebCard);
+}
+
+function renderList(containerId, arr, makeCardFn) {
+  const el = g(containerId); el.innerHTML = "";
+  if (!arr.length) { el.innerHTML = `<div class="empty">Sin items — usa el botón de abajo</div>`; return; }
+  arr.forEach((item, i) => el.appendChild(makeCardFn(item, i)));
+}
+
+// CARD FACTORIES
+function makeCard(id, title, bodyHtml, onDel) {
+  const div = document.createElement("div"); div.className = "card";
+  div.innerHTML = `<div class="card-header is-open" onclick="toggleCard(this)"><span class="card-id">${id}</span><span class="card-title">${title}</span><span class="card-toggle">+</span><button class="card-del" onclick="event.stopPropagation();this._del()">Borrar</button></div><div class="card-body open">${bodyHtml}</div>`;
+  div.querySelector(".card-del")._del = onDel;
+  return div;
+}
+
+function makeSocialCard(item, i) {
+  return makeCard("Social", item.label || "sin nombre",
+    `<div class="grid-2"><div class="field"><label>Label</label><input type="text" value="${esc(item.label)}" oninput="upd('about','social_links',${i},'label',this.value)"></div><div class="field"><label>URL</label><input type="url" value="${esc(item.url)}" placeholder="https://" oninput="upd('about','social_links',${i},'url',this.value)"></div></div>`,
+    () => { data.about.social_links.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+function makeTrackCard(t, i) {
+  return makeCard(t.id||"--", t.title||"sin título",
+    `<div class="grid-3"><div class="field"><label>ID</label><input type="text" value="${esc(t.id)}" oninput="upd('sound','tracks',${i},'id',this.value)"></div><div class="field"><label>Tipo</label><input type="text" value="${esc(t.type)}" placeholder="MIX / FIELD / HARDWARE" oninput="upd('sound','tracks',${i},'type',this.value)"></div><div class="field"><label>Duración</label><input type="text" value="${esc(t.duration)}" placeholder="64:00" oninput="upd('sound','tracks',${i},'duration',this.value)"></div></div>
+    <div class="field"><label>Título</label><input type="text" value="${esc(t.title)}" oninput="upd('sound','tracks',${i},'title',this.value)"></div>
+    <div class="field"><label>URL</label><input type="url" value="${esc(t.url)}" placeholder="https://" oninput="upd('sound','tracks',${i},'url',this.value)"></div>`,
+    () => { data.sound.tracks.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+function makeFilmCard(f, i) {
+  return makeCard(f.id||"--", f.title||"sin título",
+    `<div class="grid-3"><div class="field"><label>ID</label><input type="text" value="${esc(f.id)}" oninput="upd('video','films',${i},'id',this.value)"></div><div class="field"><label>Duración</label><input type="text" value="${esc(f.duration)}" placeholder="02:14" oninput="upd('video','films',${i},'duration',this.value)"></div><div class="field"><label>Año</label><input type="text" value="${esc(f.year)}" oninput="upd('video','films',${i},'year',this.value)"></div></div>
+    <div class="field"><label>Título</label><input type="text" value="${esc(f.title)}" oninput="upd('video','films',${i},'title',this.value)"></div>
+    <div class="field"><label>Embed URL</label><input type="url" value="${esc(f.embed_url)}" placeholder="https://player.vimeo.com/video/ID" oninput="upd('video','films',${i},'embed_url',this.value)"></div>
+    <div class="field"><label>Thumbnail (path o URL)</label><input type="text" value="${esc(f.thumbnail)}" placeholder="assets/thumbs/film01.jpg" oninput="upd('video','films',${i},'thumbnail',this.value)"></div>`,
+    () => { data.video.films.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+function makeObjectCard(obj, i) {
+  return makeCard(obj.id||"--", obj.title||"sin título",
+    `<div class="grid-3"><div class="field"><label>ID</label><input type="text" value="${esc(obj.id)}" oninput="upd('objects','items',${i},'id',this.value)"></div><div class="field"><label>Año</label><input type="text" value="${esc(obj.year)}" oninput="upd('objects','items',${i},'year',this.value)"></div><div class="field"><label>Categoría</label><input type="text" value="${esc(obj.category)}" placeholder="GARMENT / ARTIFACT / PRINT" oninput="upd('objects','items',${i},'category',this.value)"></div></div>
+    <div class="field"><label>Título</label><input type="text" value="${esc(obj.title)}" oninput="upd('objects','items',${i},'title',this.value)"></div>
+    <div class="field"><label>Imagen (path)</label><input type="text" value="${esc(obj.image)}" placeholder="assets/objects/nombre.jpg" oninput="upd('objects','items',${i},'image',this.value)"></div>
+    <div class="field"><label>Modelo 3D .glb (path)</label><input type="text" value="${esc(obj.model_3d)}" placeholder="assets/models/nombre.glb" oninput="upd('objects','items',${i},'model_3d',this.value)"><div class="field-hint">Si hay modelo 3D, tiene prioridad sobre la imagen.</div></div>
+    <div class="field"><label>Notas</label><textarea rows="2" oninput="upd('objects','items',${i},'notes',this.value)">${esc(obj.notes)}</textarea></div>`,
+    () => { data.objects.items.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+function makeDummyCard(dm, i) {
+  return makeCard(dm.id||"--", dm.title||"sin título",
+    `<div class="grid-2"><div class="field"><label>ID</label><input type="text" value="${esc(dm.id)}" oninput="upd('dummies','items',${i},'id',this.value)"></div><div class="field"><label>Forma</label><input type="text" value="${esc(dm.form)}" placeholder="torso / full body / head / leg form" oninput="upd('dummies','items',${i},'form',this.value)"></div></div>
+    <div class="field"><label>Título</label><input type="text" value="${esc(dm.title)}" oninput="upd('dummies','items',${i},'title',this.value)"></div>
+    <div class="field"><label>Imagen (path)</label><input type="text" value="${esc(dm.image)}" placeholder="assets/dummies/nombre.jpg" oninput="upd('dummies','items',${i},'image',this.value)"></div>
+    <div class="field"><label>Modelo 3D .glb (path)</label><input type="text" value="${esc(dm.model_3d)}" placeholder="assets/models/nombre.glb" oninput="upd('dummies','items',${i},'model_3d',this.value)"></div>
+    <div class="field"><label>Notas</label><textarea rows="2" oninput="upd('dummies','items',${i},'notes',this.value)">${esc(dm.notes)}</textarea></div>`,
+    () => { data.dummies.items.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+function makeSystemCard(s, i) {
+  return makeCard(s.status||"--", s.name||"sin nombre",
+    `<div class="grid-2"><div class="field"><label>Nombre</label><input type="text" value="${esc(s.name)}" oninput="upd('automatization','systems',${i},'name',this.value)"></div><div class="field"><label>Status</label><input type="text" value="${esc(s.status)}" placeholder="ACTIVE / PAUSED" oninput="upd('automatization','systems',${i},'status',this.value)"></div></div>
+    <div class="field"><label>Uptime</label><input type="text" value="${esc(s.uptime)}" placeholder="99.94%" oninput="upd('automatization','systems',${i},'uptime',this.value)"></div>
+    <div class="field"><label>Descripción</label><textarea rows="3" oninput="upd('automatization','systems',${i},'desc',this.value)">${esc(s.desc)}</textarea></div>
+    <div class="field"><label>Diagrama (path imagen)</label><input type="text" value="${esc(s.diagram)}" placeholder="assets/diagrams/pipeline-01.jpg" oninput="upd('automatization','systems',${i},'diagram',this.value)"></div>`,
+    () => { data.automatization.systems.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+function makeWebCard(p, i) {
+  return makeCard(p.id||"--", p.title||"sin título",
+    `<div class="grid-3"><div class="field"><label>ID</label><input type="text" value="${esc(p.id)}" oninput="upd('web','projects',${i},'id',this.value)"></div><div class="field"><label>Año</label><input type="text" value="${esc(p.year)}" oninput="upd('web','projects',${i},'year',this.value)"></div><div class="field"><label>Descripción</label><input type="text" value="${esc(p.desc)}" oninput="upd('web','projects',${i},'desc',this.value)"></div></div>
+    <div class="field"><label>Título</label><input type="text" value="${esc(p.title)}" oninput="upd('web','projects',${i},'title',this.value)"></div>
+    <div class="field"><label>URL</label><input type="url" value="${esc(p.url)}" placeholder="https://" oninput="upd('web','projects',${i},'url',this.value)"></div>
+    <div class="field"><label>Screenshot (path)</label><input type="text" value="${esc(p.screenshot)}" placeholder="assets/web/site01.jpg" oninput="upd('web','projects',${i},'screenshot',this.value)"></div>`,
+    () => { data.web.projects.splice(i,1); renderAll(); dirty(); }
+  );
+}
+
+// ADD ITEMS
+function addSocial()    { data.about.social_links.push({ label: "", url: "" }); renderAll(); dirty(); }
+function addTrack()     { const n = pad(data.sound.tracks.length+1); data.sound.tracks.push({ id:`M-${n}`, title:"", duration:"", type:"MIX", url:"" }); renderAll(); dirty(); }
+function addFilm()      { const n = pad(data.video.films.length+1); data.video.films.push({ id:`FILM-${n}`, title:"", duration:"", year:String(new Date().getFullYear()), embed_url:"", thumbnail:"" }); renderAll(); dirty(); }
+function addObject()    { const n = pad(data.objects.items.length+1); data.objects.items.push({ id:`OB-${n}`, title:`ob-${n}`, year:"", category:"", image:"", model_3d:"", notes:"" }); renderAll(); dirty(); }
+function addDummy()     { const n = pad(data.dummies.items.length+1); data.dummies.items.push({ id:`DM-${n}`, title:`dummy ${n}`, form:"", image:"", model_3d:"", notes:"" }); renderAll(); dirty(); }
+function addSystem()    { data.automatization.systems.push({ name:"", desc:"", status:"ACTIVE", uptime:"99.00%", diagram:"" }); renderAll(); dirty(); }
+function addWebProject(){ const n = pad(data.web.projects.length+1); data.web.projects.push({ id:`W-${n}`, title:"", desc:"", year:String(new Date().getFullYear()), url:"", screenshot:"" }); renderAll(); dirty(); }
+
+// COLLECT
+function collectAll() {
+  data.about.name           = g("about-name").value;
+  data.about.portrait_image = g("about-portrait").value;
+  data.about.bio            = g("about-bio").value;
+  data.about.note_a         = g("about-note-a").value;
+  data.about.note_b         = g("about-note-b").value;
+  data.about.note_c         = g("about-note-c").value;
+  data.about.studio_lines   = g("about-studio").value.split("\n").filter(Boolean);
+  data.about.contact_lines  = g("about-contact").value.split("\n").filter(Boolean);
+  data.about.tags           = g("about-tags").value.split(",").map(t => t.trim()).filter(Boolean);
+  data.sound.intro          = g("sound-intro").value;
+  data.sound.notes          = g("sound-notes").value;
+  data.sound.cover_image    = g("sound-cover").value;
+  data.video.intro          = g("video-intro").value;
+  data.objects.intro        = g("objects-intro").value;
+  data.objects.notes        = g("objects-notes").value;
+  data.objects.count        = g("objects-count").value;
+  data.dummies.intro        = g("dummies-intro").value;
+  data.dummies.notes        = g("dummies-notes").value;
+  data.dummies.count        = g("dummies-count").value;
+  data.automatization.intro        = g("auto-intro").value;
+  data.automatization.active_count = g("auto-count").value;
+  data.automatization.uptime       = g("auto-uptime").value;
+  data.web.intro  = g("web-intro").value;
+  data.web.stack  = g("web-stack").value;
+  data.web.notes  = g("web-notes").value;
+}
+
+// MUTATIONS
+function upd(section, array, idx, key, val) { data[section][array][idx][key] = val; dirty(); }
+
+// SAVE
+function saveAndDownload() {
+  collectAll();
+  data._meta.updated = today();
+  data._meta.version = (data._meta.version || 0) + 1;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+  a.download = "content.json"; a.click(); URL.revokeObjectURL(a.href);
+  _dirty = false;
+  setStatus("Guardado · v" + data._meta.version + " · " + ts(), "");
+  toast("content.json descargado — reemplázalo en la carpeta del proyecto");
+}
+
+// NAV
+function sw(name, el) {
+  collectAll();
+  document.querySelectorAll(".section-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".sidebar-item").forEach(i => i.classList.remove("active"));
+  g("panel-" + name).classList.add("active");
+  el.classList.add("active");
+  document.querySelector(".main").scrollTop = 0;
+}
+
+// UI HELPERS
+function g(id) { return document.getElementById(id); }
+function esc(s) { return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function pad(n) { return String(n).padStart(2,"0"); }
+function ts() { return new Date().toLocaleTimeString(); }
+function today() { return new Date().toISOString().slice(0,10); }
+function dirty() { _dirty = true; setStatus("Sin guardar — pulsa ↓ Guardar JSON", "dirty"); }
+function setStatus(msg, cls) { const el = g("status-bar"); el.textContent = msg; el.className = "topbar-status " + cls; }
+function toast(msg) { const t = g("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
+function previewSite() { window.open("index.html","_blank"); }
+function toggleCard(h) { const b = h.nextElementSibling; b.classList.toggle("open"); h.classList.toggle("is-open", b.classList.contains("open")); }
+
+window.addEventListener("beforeunload", e => { if (_dirty) { e.preventDefault(); e.returnValue = ""; } });
+</script>
+</body>
+</html>

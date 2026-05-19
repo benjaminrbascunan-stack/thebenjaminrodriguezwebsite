@@ -1,0 +1,336 @@
+/* floating-pages.css — editorial floating windows
+   Typography logic inspired by simple studio sites:
+   heavy sans-serif headings + lowercase Helvetica/Arial body,
+   two-column layout, sparse, multimedia placeholders.
+*/
+
+#fp-root {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* Backdrop — dims the site behind the panel */
+.fp-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(239, 238, 236, 0.0);
+  backdrop-filter: blur(0px) saturate(100%);
+  -webkit-backdrop-filter: blur(0px) saturate(100%);
+  transition:
+    background 520ms cubic-bezier(.2,.7,.2,1),
+    backdrop-filter 520ms cubic-bezier(.2,.7,.2,1),
+    -webkit-backdrop-filter 520ms cubic-bezier(.2,.7,.2,1);
+  pointer-events: none;
+}
+.fp-backdrop.open {
+  background: rgba(239, 238, 236, 0.55);
+  backdrop-filter: blur(6px) saturate(105%);
+  -webkit-backdrop-filter: blur(6px) saturate(105%);
+  pointer-events: auto;
+}
+
+/* Floating panel — almost full viewport, simple white surface */
+.fp-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 92vw;
+  height: 90vh;
+  max-width: 1700px;
+  transform: translate(-50%, -50%) scale(0.98);
+  opacity: 0;
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow:
+    0 30px 80px rgba(10, 10, 10, 0.18),
+    0 8px 24px rgba(10, 10, 10, 0.08),
+    0 0 0 1px rgba(0,0,0,0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    opacity 520ms cubic-bezier(.2,.7,.2,1),
+    transform 620ms cubic-bezier(.2,.7,.2,1);
+  pointer-events: none;
+}
+.fp-panel.open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+/* Close button — minimal × in top-right corner of panel */
+.fp-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #000;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 220ms ease, opacity 200ms ease;
+  opacity: 0.85;
+}
+.fp-close:hover { transform: rotate(90deg); opacity: 1; }
+.fp-close::before { content: "×"; display: block; position: relative; top: -2px; }
+
+/* Header is collapsed — title goes inside the body as the first big heading,
+   matching the studio-page logic (no chrome bar). */
+.fp-header {
+  display: none;
+}
+
+/* Body — the actual editorial canvas */
+.fp-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 60px 70px 80px 70px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+  color: #000;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+.fp-body::-webkit-scrollbar { width: 8px; }
+.fp-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 0; }
+.fp-body::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- TWO-COLUMN GRID — the core layout ---------- */
+.fp-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 80px;
+  row-gap: 40px;
+  align-items: start;
+}
+.fp-layout > .fp-col { min-width: 0; }
+
+@media (max-width: 1000px) {
+  .fp-layout { grid-template-columns: 1fr; column-gap: 0; row-gap: 28px; }
+  .fp-body { padding: 50px 36px 70px 36px; }
+}
+
+/* ---------- TYPOGRAPHY ---------- */
+.fp-body h1,
+.fp-body h2,
+.fp-body h3 {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  color: #000;
+  margin: 0;
+  line-height: 1.05;
+}
+.fp-body h1 {
+  font-size: clamp(28px, 3.2vw, 44px);
+  margin-bottom: 20px;
+}
+.fp-body h2 {
+  font-size: clamp(28px, 3.2vw, 44px);
+  margin: 0 0 20px 0;
+}
+/* Spacing between consecutive sections in the same column */
+.fp-col h2 + p,
+.fp-col h2 + .fp-block,
+.fp-col h2 + .fp-grid,
+.fp-col h2 + .fp-list { margin-top: 0; }
+
+.fp-col > h2 ~ h2 { margin-top: 56px; }
+.fp-col > * + h2 { margin-top: 56px; }
+
+.fp-body h3 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 0 0 6px 0;
+}
+
+.fp-body p {
+  margin: 0 0 16px 0;
+  max-width: 38ch;
+  text-transform: lowercase;
+}
+.fp-body p.preserve-case { text-transform: none; }
+
+.fp-body a {
+  color: #000;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.fp-body a:hover { color: #000; text-decoration-thickness: 2px; }
+
+/* A small block of stacked lines (address, links, etc.) */
+.fp-block {
+  margin: 0 0 22px 0;
+  text-transform: lowercase;
+}
+.fp-block > div { margin: 0; }
+.fp-block.preserve-case { text-transform: none; }
+
+/* Inline list of comma-separated links/items */
+.fp-inline-links {
+  margin: 0 0 22px 0;
+  text-transform: lowercase;
+}
+.fp-inline-links a { margin-right: 2px; }
+
+/* Two-column mini grid for service tags / disciplines */
+.fp-tags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 32px;
+  row-gap: 8px;
+  margin: 28px 0 0 0;
+  text-transform: lowercase;
+}
+
+/* ---------- MULTIMEDIA PLACEHOLDERS ---------- */
+.fp-slot {
+  position: relative;
+  background: #f0efed;
+  border: 1px solid rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  color: rgba(0,0,0,0.55);
+}
+.fp-slot::before {
+  /* subtle diagonal hatch */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(0,0,0,0.04) 0,
+    rgba(0,0,0,0.04) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+  pointer-events: none;
+}
+.fp-slot .label {
+  position: relative;
+  z-index: 1;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
+}
+.fp-slot.tall   { aspect-ratio: 3 / 4; }
+.fp-slot.wide   { aspect-ratio: 16 / 9; }
+.fp-slot.square { aspect-ratio: 1 / 1; }
+.fp-slot.tiny   { aspect-ratio: 1 / 1; }
+
+.fp-slot-grid {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 24px 0;
+}
+.fp-slot-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.fp-slot-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.fp-slot-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Video / iframe embed shell — placeholder by default */
+.fp-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0c0c0c;
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+  margin: 12px 0 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.5);
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+.fp-embed iframe, .fp-embed video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.fp-embed-caption {
+  margin: 0 0 22px 0;
+  font-size: 13px;
+  color: rgba(0,0,0,0.55);
+  text-transform: lowercase;
+}
+
+/* Audio placeholder — single-line bar */
+.fp-audio {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #f0efed;
+  border: 1px solid rgba(0,0,0,0.08);
+  margin: 0 0 10px 0;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  text-transform: lowercase;
+  color: #000;
+}
+.fp-audio .play {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex: 0 0 auto;
+}
+.fp-audio .meta { margin-left: auto; color: rgba(0,0,0,0.5); font-size: 12px; }
+
+/* Underlined-text list (for clients-style runs) */
+.fp-runlist {
+  text-transform: lowercase;
+  margin: 0 0 22px 0;
+  max-width: 38ch;
+}
+
+/* Footer under the body */
+.fp-pagefoot {
+  margin-top: 70px;
+  padding-top: 18px;
+  text-align: center;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  color: rgba(0,0,0,0.6);
+  text-transform: none;
+  grid-column: 1 / -1;
+}
+.fp-pagefoot a { color: rgba(0,0,0,0.85); }
