@@ -143,7 +143,7 @@
     <div class="topbar-status" id="status-bar">Cargando...</div>
     <div class="topbar-actions">
       <button class="tbtn" onclick="previewSite()">↗ Ver sitio</button>
-      <button class="tbtn primary" onclick="saveAndDownload()">↓ Guardar JSON</button>
+      <button class="tbtn primary" onclick="saveAndDownload()">↑ Publicar</button>
       <button class="tbtn" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -284,7 +284,11 @@
 
 <script>
 const PASSWORD = "$14Febero";
-let data = null, _dirty = false;
+const GH_TOKEN = "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";
+const GH_REPO  = "benjaminrbascunan-stack/thebenjaminrodriguezwebsite";
+const GH_FILE  = "content.json";
+const GH_BRANCH = "main";
+let data = null, _dirty = false, _fileSha = null;
 
 // LOGIN
 document.getElementById("pwd-input").addEventListener("keydown", e => { if (e.key === "Enter") attemptLogin(); });
@@ -303,8 +307,18 @@ function logout() { if (_dirty && !confirm("Cambios sin guardar. ¿Salir?")) ret
 
 // LOAD
 function load() {
-  fetch("content.json?" + Date.now()).then(r => r.json()).then(j => { data = j; renderAll(); setStatus("Listo · " + ts(), ""); })
-    .catch(() => { data = blankData(); renderAll(); dirty(); setStatus("Nuevo archivo", "dirty"); });
+  setStatus("Cargando desde GitHub...", "");
+  fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`, {
+    headers: { Authorization: `token ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json" }
+  })
+  .then(r => r.json())
+  .then(file => {
+    _fileSha = file.sha;
+    const json = JSON.parse(atob(file.content.replace(/\n/g, "")));
+    data = json; renderAll();
+    setStatus("Listo · " + ts(), "");
+  })
+  .catch(() => { data = blankData(); renderAll(); dirty(); setStatus("Archivo nuevo", "dirty"); });
 }
 
 function blankData() {
@@ -480,17 +494,32 @@ function collectAll() {
 // MUTATIONS
 function upd(section, array, idx, key, val) { data[section][array][idx][key] = val; dirty(); }
 
-// SAVE
-function saveAndDownload() {
+// SAVE — push directly to GitHub, Netlify redeploys automatically
+async function saveAndDownload() {
   collectAll();
   data._meta.updated = today();
   data._meta.version = (data._meta.version || 0) + 1;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-  a.download = "content.json"; a.click(); URL.revokeObjectURL(a.href);
-  _dirty = false;
-  setStatus("Guardado · v" + data._meta.version + " · " + ts(), "");
-  toast("content.json descargado — reemplázalo en la carpeta del proyecto");
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  setStatus("Guardando en GitHub...", "dirty");
+  try {
+    const body = { message: "content update v" + data._meta.version, content, branch: GH_BRANCH };
+    if (_fileSha) body.sha = _fileSha;
+    const res = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`, {
+      method: "PUT",
+      headers: { Authorization: `token ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json", "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+    const result = await res.json();
+    _fileSha = result.content.sha;
+    _dirty = false;
+    setStatus("Publicado en GitHub · v" + data._meta.version + " · " + ts(), "");
+    toast("✓ Guardado en GitHub — Netlify publica en ~30 segundos");
+  } catch(err) {
+    setStatus("Error al guardar: " + err.message, "dirty");
+    toast("Error: " + err.message);
+    console.error(err);
+  }
 }
 
 // NAV
@@ -509,7 +538,7 @@ function esc(s) { return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").re
 function pad(n) { return String(n).padStart(2,"0"); }
 function ts() { return new Date().toLocaleTimeString(); }
 function today() { return new Date().toISOString().slice(0,10); }
-function dirty() { _dirty = true; setStatus("Sin guardar — pulsa ↓ Guardar JSON", "dirty"); }
+function dirty() { _dirty = true; setStatus("Sin guardar — pulsa ↑ Publicar", "dirty"); }
 function setStatus(msg, cls) { const el = g("status-bar"); el.textContent = msg; el.className = "topbar-status " + cls; }
 function toast(msg) { const t = g("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3500); }
 function previewSite() { window.open("index.html","_blank"); }
