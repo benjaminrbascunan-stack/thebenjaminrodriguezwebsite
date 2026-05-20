@@ -96,26 +96,44 @@
   const colorArr = new Float32Array(vertCount * 3).fill(1.0);
   geometry.setAttribute("color", new THREE.BufferAttribute(colorArr, 3));
 
-  // Texture load — new atlas is face-dominant and clean; no preprocessing.
+  // Multi-texture system — reacts to spin speed
   const texLoader = new THREE.TextureLoader();
-  const texture = texLoader.load(
-    "assets/head-texture.png",
-    () => {
-      loader.classList.add("gone");
-      setTimeout(() => loader.remove(), 700);
-    },
-    undefined,
-    () => {
+  const FACE_TEXTURES = [
+    "assets/head-texture.png",   // 0: normal
+    "assets/head-dizzy-1.png",   // 1: dizzy light
+    "assets/head-dizzy-2.png",   // 2: dizzy heavy
+    "assets/head-dizzy-3.png",   // 3: about to vomit
+    "assets/head-vomit-1.png",   // 4: vomit frame 1
+    "assets/head-vomit-2.png",   // 5: vomit frame 2
+  ];
+  function makeTexture(url, onLoad) {
+    const t = texLoader.load(url, onLoad, undefined, onLoad);
+    t.minFilter = THREE.NearestFilter;
+    t.magFilter = THREE.NearestFilter;
+    t.generateMipmaps = false;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.ClampToEdgeWrapping;
+    return t;
+  }
+  let loadedCount = 0;
+  const onFirstLoad = () => {
+    loadedCount++;
+    if (loadedCount === 1) {
       loader.classList.add("gone");
       setTimeout(() => loader.remove(), 700);
     }
-  );
-  texture.minFilter = THREE.NearestFilter;
-  texture.magFilter = THREE.NearestFilter;
-  texture.generateMipmaps = false;
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
+  };
+  const textures = FACE_TEXTURES.map((url, i) => makeTexture(url, i === 0 ? onFirstLoad : undefined));
+  const texture = textures[0]; // active texture reference (used by material)
+
+  // Spin tracking
+  let spinAccum = 0;          // accumulated spin energy
+  let currentTexIdx = 0;
+  let vomitTimer = 0;         // counts up during vomit sequence
+  let vomitFrame = 0;
+  let isVomiting = false;
+  let recoveryTimer = 0;
 
   const material = new THREE.MeshLambertMaterial({
     map: texture,
@@ -390,6 +408,21 @@
   window.addEventListener("resize", resize);
   resize();
 
+  // ---------- texture switcher ----------
+  function setTexture(idx) {
+    if (currentTexIdx === idx) return;
+    currentTexIdx = idx;
+    material.map = textures[idx];
+    material.needsUpdate = true;
+  }
+
+  // Thresholds for spin energy accumulator
+  const SPIN_DIZZY1  = 0.8;   // → cara 2
+  const SPIN_DIZZY2  = 2.2;   // → cara 3
+  const SPIN_VOMIT   = 4.0;   // → trigger vomit sequence
+  const SPIN_DECAY   = 1.4;   // how fast energy drains when not spinning
+  const SPIN_GAIN    = 18.0;  // how fast energy builds from drag speed
+
   // ---------- main loop ----------
   const clock = new THREE.Clock();
   let t = 0;
@@ -401,8 +434,12 @@
     head.position.y = Math.sin(t * 0.6) * 0.045;
     head.position.x = Math.cos(t * 0.4) * 0.025;
 
+    // Current drag speed
+    const dragSpeed = isDragging ? Math.hypot(dragVel.x, dragVel.y) : 0;
+
     if (isDragging) {
       // rotation handled in pointermove
+      spinAccum += dragSpeed * SPIN_GAIN * dt;
     } else {
       // momentum
       applyRot(dragVel.x, dragVel.y);
@@ -411,12 +448,46 @@
 
       // blend back to auto rotation as drag velocity decays
       const speed = Math.hypot(dragVel.x, dragVel.y);
-      autoFade = Math.min(1, autoFade + dt * 0.25);   // slower ramp-back-to-auto
+      spinAccum += speed * SPIN_GAIN * dt * 0.5; // momentum also builds spin
+
+      autoFade = Math.min(1, autoFade + dt * 0.25);
       const blend = Math.max(autoFade, 1 - speed * 30);
       applyRot(AUTO_YAW * blend, AUTO_PITCH * blend);
+    }
 
-      if (speed < 0.0005 && autoFade < 1) {
-        // settled into auto rotation; no status display
+    // Vomit sequence state machine
+    if (isVomiting) {
+      vomitTimer += dt;
+      if (vomitTimer < 0.35) {
+        setTexture(4); // vomit frame 1
+      } else if (vomitTimer < 0.70) {
+        setTexture(5); // vomit frame 2
+      } else if (vomitTimer < 1.05) {
+        setTexture(4); // vomit frame 1 again
+      } else {
+        // vomit done — reset
+        isVomiting = false;
+        vomitTimer = 0;
+        spinAccum = 0;
+        recoveryTimer = 0;
+        setTexture(0);
+      }
+    } else {
+      // Recovery: drain spin energy over time
+      spinAccum = Math.max(0, spinAccum - SPIN_DECAY * dt);
+
+      // Pick texture based on spin energy
+      if (spinAccum >= SPIN_VOMIT) {
+        // Trigger vomit!
+        isVomiting = true;
+        vomitTimer = 0;
+        setTexture(3); // flash "about to vomit" first
+      } else if (spinAccum >= SPIN_DIZZY2) {
+        setTexture(2);
+      } else if (spinAccum >= SPIN_DIZZY1) {
+        setTexture(1);
+      } else {
+        setTexture(0);
       }
     }
 
