@@ -286,7 +286,7 @@
 // Admin inline login
 window.inlineAdminLogin = function() {
   const val = document.getElementById("inline-pwd").value;
-  const ADMIN_PASSWORD = "$14Febero";
+  const ADMIN_PASSWORD = "14Febrero";
   if (val === ADMIN_PASSWORD) {
     window.location.href = "admin.html";
   } else {
