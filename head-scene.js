@@ -458,36 +458,39 @@
     // Vomit sequence state machine
     if (isVomiting) {
       vomitTimer += dt;
-      if (vomitTimer < 0.35) {
-        setTexture(4); // vomit frame 1
-      } else if (vomitTimer < 0.70) {
-        setTexture(5); // vomit frame 2
-      } else if (vomitTimer < 1.05) {
-        setTexture(4); // vomit frame 1 again
+      // Sequence: cara4 (about to) → cara5 → cara6 → cara5 → cara6 → back to normal
+      if (vomitTimer < 0.6) {
+        setTexture(3); // cara 4: about to vomit (hold longer for anticipation)
+      } else if (vomitTimer < 1.2) {
+        setTexture(4); // cara 5: vomit frame 1
+      } else if (vomitTimer < 1.8) {
+        setTexture(5); // cara 6: vomit frame 2
+      } else if (vomitTimer < 2.3) {
+        setTexture(4); // cara 5 again
+      } else if (vomitTimer < 2.8) {
+        setTexture(5); // cara 6 again
       } else {
-        // vomit done — reset
+        // vomit done — reset everything
         isVomiting = false;
         vomitTimer = 0;
         spinAccum = 0;
-        recoveryTimer = 0;
         setTexture(0);
       }
     } else {
       // Recovery: drain spin energy over time
       spinAccum = Math.max(0, spinAccum - SPIN_DECAY * dt);
 
-      // Pick texture based on spin energy
-      if (spinAccum >= SPIN_VOMIT) {
-        // Trigger vomit!
+      // Trigger vomit ONLY when user releases (not dragging) and hit max energy
+      if (!isDragging && spinAccum >= SPIN_VOMIT) {
         isVomiting = true;
         vomitTimer = 0;
-        setTexture(3); // flash "about to vomit" first
+        setTexture(3);
       } else if (spinAccum >= SPIN_DIZZY2) {
-        setTexture(2);
+        setTexture(2); // cara 3: heavy dizzy
       } else if (spinAccum >= SPIN_DIZZY1) {
-        setTexture(1);
+        setTexture(1); // cara 2: light dizzy
       } else {
-        setTexture(0);
+        setTexture(0); // cara 1: normal
       }
     }
 
