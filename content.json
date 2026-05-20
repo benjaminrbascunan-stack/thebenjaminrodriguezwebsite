@@ -1,19 +1,19 @@
 {
   "_meta": {
-    "version": 2,
-    "updated": "2026-05-19",
+    "version": 3,
+    "updated": "2026-05-20",
     "site": "TheBenjaminRodriguezWebsite"
   },
   "about": {
     "name": "BENJAMIN RODRIGUEZ",
-    "bio": "systems thinker, builder and creative director working between industrial design, second-hand designer fashion, retail direction, automation, ai workflows, 3d modeling, web experimentation and underground internet culture.",
-    "note_a": "this site is not a portfolio. it is a personal operating system — an experimental archive where every object and obsession is treated as a unit of authorship.",
+    "bio": "Prueba \nPrueba Prueba",
+    "note_a": "this site is not a portfolio. it is a personal operating system â an experimental archive where every object and obsession is treated as a unit of authorship.",
     "note_b": "each polygon of the head is a doorway. each doorway leads into a working room of the practice.",
-    "note_c": "the interior will keep growing — slowly, on its own clock.",
+    "note_c": "the interior will keep growing â slowly, on its own clock.",
     "studio_lines": [
       "the benjamin rodriguez studio",
       "by appointment",
-      "miami ↔ new york city"
+      "miami â new york city   Santiago "
     ],
     "contact_lines": [
       "studio +1 305 000 0000",
@@ -23,7 +23,7 @@
     "social_links": [
       {
         "label": "instagram",
-        "url": ""
+        "url": "https://www.instagram.com/beeeeeeenjit4_/"
       },
       {
         "label": "are.na",
@@ -55,14 +55,14 @@
     "tracks": [
       {
         "id": "M-01",
-        "title": "studio mix n° 11 — ambient",
+        "title": "studio mix nÂ° 11 â ambient",
         "duration": "64:00",
         "type": "MIX",
         "url": ""
       },
       {
         "id": "M-02",
-        "title": "studio mix n° 10 — ambient",
+        "title": "studio mix nÂ° 10 â ambient",
         "duration": "51:00",
         "type": "MIX",
         "url": ""
@@ -229,7 +229,7 @@
     "items": [
       {
         "id": "Kerastase ",
-        "title": "dummy 01 — torso",
+        "title": "dummy 01 â torso",
         "form": "prueba 1 ",
         "image": "",
         "model_3d": "",
@@ -237,7 +237,7 @@
       },
       {
         "id": "DM-02",
-        "title": "dummy 02 — full body",
+        "title": "dummy 02 â full body",
         "form": "full body",
         "image": "",
         "model_3d": "",
@@ -245,7 +245,7 @@
       },
       {
         "id": "DM-03",
-        "title": "dummy 03 — head",
+        "title": "dummy 03 â head",
         "form": "head",
         "image": "",
         "model_3d": "",
@@ -253,7 +253,7 @@
       },
       {
         "id": "DM-04",
-        "title": "dummy 04 — half-body",
+        "title": "dummy 04 â half-body",
         "form": "half-body",
         "image": "",
         "model_3d": "",
@@ -261,7 +261,7 @@
       },
       {
         "id": "DM-05",
-        "title": "dummy 05 — leg form",
+        "title": "dummy 05 â leg form",
         "form": "leg form",
         "image": "",
         "model_3d": "",
@@ -269,7 +269,7 @@
       },
       {
         "id": "DM-06",
-        "title": "dummy 06 — hand",
+        "title": "dummy 06 â hand",
         "form": "hand",
         "image": "",
         "model_3d": "",
@@ -298,7 +298,7 @@
       },
       {
         "name": "SCRAPING",
-        "desc": "continuous scrapes of auction houses, secondary markets and archive sites — feeds the objects index.",
+        "desc": "continuous scrapes of auction houses, secondary markets and archive sites â feeds the objects index.",
         "status": "ACTIVE",
         "uptime": "98.72%",
         "diagram": ""
