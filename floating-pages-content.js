@@ -260,6 +260,44 @@
       reg("DUMMIES",        { title: "DUMMIES",         html: buildDummies(data.dummies) });
       reg("AUTOMATIZATION", { title: "AUTOMATIZATION",  html: buildAutomatization(data.automatization) });
       reg("WEB",            { title: "WEB",             html: buildWeb(data.web) });
+
+      // Admin entry — registered with static HTML, no content.json needed
+      reg("???", {
+        title: "???",
+        html: `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:60vh;gap:32px;">
+            <h2 style="font-family:Arial,sans-serif;font-weight:700;font-size:clamp(32px,6vw,80px);letter-spacing:-0.02em;text-transform:uppercase;line-height:1;text-align:center;">What you<br>looking for?</h2>
+            <div style="display:flex;flex-direction:column;width:320px;gap:0;">
+              <input type="password" id="inline-pwd" placeholder="contraseña" autocomplete="current-password"
+                style="background:#fff;border:2px solid #000;border-bottom:none;color:#000;font-family:Arial,sans-serif;font-size:14px;font-weight:700;padding:14px 16px;outline:none;width:100%;">
+              <button onclick="inlineAdminLogin()"
+                style="background:#000;color:#fff;border:2px solid #000;font-family:Arial,sans-serif;font-weight:700;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;padding:14px 24px;cursor:pointer;text-align:left;width:100%;">
+                Entrar →
+              </button>
+              <div id="inline-pwd-error" style="display:none;font-weight:700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#000;margin-top:10px;">Contraseña incorrecta</div>
+            </div>
+          </div>
+        `,
+      });
     })
     .catch(err => console.error("FloatingPages: failed to load content.json", err));
 })();
+
+// Admin inline login
+window.inlineAdminLogin = function() {
+  const val = document.getElementById("inline-pwd").value;
+  const ADMIN_PASSWORD = "$14Febero";
+  if (val === ADMIN_PASSWORD) {
+    window.location.href = "admin.html";
+  } else {
+    document.getElementById("inline-pwd-error").style.display = "block";
+    document.getElementById("inline-pwd").value = "";
+    document.getElementById("inline-pwd").focus();
+  }
+};
+document.addEventListener("keydown", function(e) {
+  const pwd = document.getElementById("inline-pwd");
+  if (pwd && document.activeElement === pwd && e.key === "Enter") {
+    window.inlineAdminLogin();
+  }
+});
