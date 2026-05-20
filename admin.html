@@ -18,33 +18,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: #fff; color: #000; font-family: var(--font); font-size: 14px; line-height: 1.5; }
 
-  /* LOGIN */
-  #login-screen {
-    position: fixed; inset: 0; z-index: 100; background: #fff;
-    display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; padding: 48px;
-  }
-  #login-screen h1 {
-    font-family: var(--font); font-weight: 700;
-    font-size: clamp(48px, 9vw, 120px); line-height: 0.9;
-    letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 48px;
-  }
-  .login-box { display: flex; flex-direction: column; width: 360px; }
-  .login-box input {
-    background: #fff; border: 2px solid #000; border-bottom: none;
-    color: #000; font-family: var(--font); font-size: 14px; font-weight: 700;
-    padding: 14px 16px; outline: none; width: 100%;
-  }
-  .login-box input::placeholder { color: #ccc; font-weight: 400; }
-  .btn-login {
-    background: #000; color: #fff; border: 2px solid #000;
-    font-family: var(--font); font-weight: 700; font-size: 13px;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 14px 24px; cursor: pointer; text-align: left;
-    transition: background 120ms, color 120ms;
-  }
-  .btn-login:hover { background: #fff; color: #000; }
-  #login-error { font-weight: 700; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 12px; display: none; }
-  .login-hint { position: fixed; bottom: 24px; right: 48px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: #ccc; text-transform: uppercase; }
+
 
   /* APP */
   #app { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
@@ -127,15 +101,7 @@
 </head>
 <body>
 
-<div id="login-screen">
-  <h1>Benjamin<br>Rodriguez<br>— Admin</h1>
-  <div class="login-box">
-    <input type="password" id="pwd-input" placeholder="Contraseña" autocomplete="current-password">
-    <button class="btn-login" onclick="attemptLogin()">Entrar →</button>
-    <div id="login-error">Contraseña incorrecta</div>
-  </div>
-  <div class="login-hint">thebenjaminrodriguezwebsite.com · admin</div>
-</div>
+<!-- login handled by index.html -->
 
 <div id="app">
   <div class="topbar">
@@ -283,27 +249,18 @@
 <div id="toast"></div>
 
 <script>
-const PASSWORD = "$14Febero";
 const GH_TOKEN = "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";
 const GH_REPO  = "benjaminrbascunan-stack/thebenjaminrodriguezwebsite";
 const GH_FILE  = "content.json";
 const GH_BRANCH = "main";
 let data = null, _dirty = false, _fileSha = null;
 
-// LOGIN
-document.getElementById("pwd-input").addEventListener("keydown", e => { if (e.key === "Enter") attemptLogin(); });
-function attemptLogin() {
-  if (document.getElementById("pwd-input").value === PASSWORD) {
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app").classList.add("visible");
-    load();
-  } else {
-    document.getElementById("login-error").style.display = "block";
-    document.getElementById("pwd-input").value = "";
-    document.getElementById("pwd-input").focus();
-  }
-}
-function logout() { if (_dirty && !confirm("Cambios sin guardar. ¿Salir?")) return; location.reload(); }
+// Auto-start — auth handled by index.html
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("app").classList.add("visible");
+  load();
+});
+function logout() { if (_dirty && !confirm("Cambios sin guardar. ¿Salir?")) return; window.location.href = "index.html"; }
 
 // LOAD
 function load() {
