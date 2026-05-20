@@ -11,6 +11,7 @@
     { id: "DUMMIES",        dir: [ 0.00,  1.00,  0.30] },  // top — forehead/crown
     { id: "AUTOMATIZATION", dir: [ 1.00,  0.00,  0.15] },  // right ear (viewer's right)
     { id: "WEB",            dir: [ 0.00, -1.00,  0.30] },  // bottom — chin
+    { id: "???",            dir: [ 0.55, -0.70, -0.80] },  // back-lower — hidden admin
   ];
   const FILL_LABEL = "ADD LATER";
   const FILL_COUNT = 2;     // two placeholder labels only
