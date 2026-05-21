@@ -23,8 +23,8 @@
   .bgtype {
     position: fixed;
     top: 0px;
-    left: 0px;
-    right: 0px;
+    left: 24px;
+    right: 24px;
     bottom: 58px;
     display: flex;
     flex-direction: column;
@@ -65,11 +65,13 @@
     overflow: hidden;
     position: relative;
   }
+  /* INSIDE: scale to full width then scroll */
   .bgtype .line.l2 .marquee-inner {
     display: flex;
     white-space: nowrap;
     width: max-content;
-    animation: inside-marquee 18s linear infinite;
+    animation: inside-marquee 14s linear infinite;
+    transform-origin: left center;
   }
   .bgtype .line.l2 .word {
     display: inline-block;
@@ -80,10 +82,11 @@
     letter-spacing: -0.025em;
     text-transform: uppercase;
     color: #000;
+    white-space: nowrap;
   }
   @keyframes inside-marquee {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
+    from { transform: scaleX(var(--sx,1)) translateX(0); }
+    to   { transform: scaleX(var(--sx,1)) translateX(calc(-100% / 8)); }
   }
 
   /* ---------- MOBILE MARQUEE (4 stacked lines) ---------- */
@@ -239,9 +242,9 @@
 
 <!-- 1. Background Impact type — force-justified to viewport margins -->
 <div class="bgtype" aria-hidden="true">
-  <div class="line l1" style="padding: 8px 20px 0 20px;"><span class="t">YOU ARE</span></div>
+  <div class="line l1"><span class="t">YOU ARE</span></div>
   <div class="line l2"><div class="marquee-inner"><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span></div></div>
-  <div class="line l3" style="padding: 0 20px 8px 20px;"><span class="t">MY HEAD</span></div>
+  <div class="line l3"><span class="t">MY HEAD</span></div>
 </div>
 
 <!-- 1b. Mobile marquee — 4 stacked scrolling lines, same text, alternating direction -->
@@ -283,7 +286,28 @@
     function fitJustified() {
       var lines = document.querySelectorAll('.bgtype .line');
       lines.forEach(function (line) {
-        if (line.classList.contains('l2')) return; // l2 is a marquee, skip scaleX
+        if (line.classList.contains('l2')) {
+          // For INSIDE: scale the marquee-inner so one word fills container width
+          var inner = line.querySelector('.marquee-inner');
+          var word  = line.querySelector('.word');
+          if (!inner || !word) return;
+          // Reset scale to measure natural width of one word
+          inner.style.setProperty('--sx', '1');
+          inner.style.transform = 'none';
+          var naturalWord = word.getBoundingClientRect().width;
+          var target = line.getBoundingClientRect().width;
+          if (naturalWord > 0 && target > 0) {
+            var s = target / naturalWord;
+            inner.style.setProperty('--sx', s.toFixed(4));
+            // Update animation keyframe dynamically
+            var styleId = 'inside-marquee-style';
+            var el = document.getElementById(styleId) || document.createElement('style');
+            el.id = styleId;
+            el.textContent = '@keyframes inside-marquee { from { transform: scaleX(' + s.toFixed(4) + ') translateX(0); } to { transform: scaleX(' + s.toFixed(4) + ') translateX(calc(-100% / ' + s.toFixed(4) + ')); } }';
+            if (!el.parentNode) document.head.appendChild(el);
+          }
+          return;
+        }
         var inner = line.querySelector('.t');
         if (!inner) return;
         inner.style.transform = 'scaleX(1)';
