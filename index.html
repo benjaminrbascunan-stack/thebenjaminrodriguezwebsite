@@ -22,10 +22,10 @@
 
   .bgtype {
     position: fixed;
-    top: 24px;
-    left: 28px;
-    right: 28px;
-    bottom: 58px;        /* leave room for license */
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 58px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -65,16 +65,21 @@
     overflow: hidden;
     position: relative;
   }
-  .bgtype .line.l2 .t {
+  .bgtype .line.l2 .marquee-inner {
     display: flex;
     white-space: nowrap;
     width: max-content;
-    transform: none !important; /* override scaleX justify for this line */
     animation: inside-marquee 18s linear infinite;
   }
-  .bgtype .line.l2 .t .word {
+  .bgtype .line.l2 .word {
     display: inline-block;
-    padding-right: 0.5em;
+    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
+    font-weight: 900;
+    font-size: clamp(120px, 30vh, 40vw);
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    color: #000;
   }
   @keyframes inside-marquee {
     from { transform: translateX(0); }
@@ -234,24 +239,24 @@
 
 <!-- 1. Background Impact type — force-justified to viewport margins -->
 <div class="bgtype" aria-hidden="true">
-  <div class="line l1"><span class="t">YOU ARE</span></div>
-  <div class="line l2"><span class="t"><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span></span></div>
-  <div class="line l3"><span class="t">MY HEAD</span></div>
+  <div class="line l1" style="padding: 8px 20px 0 20px;"><span class="t">YOU ARE</span></div>
+  <div class="line l2"><div class="marquee-inner"><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span></div></div>
+  <div class="line l3" style="padding: 0 20px 8px 20px;"><span class="t">MY HEAD</span></div>
 </div>
 
 <!-- 1b. Mobile marquee — 4 stacked scrolling lines, same text, alternating direction -->
 <div class="bgtype-marquee" aria-hidden="true">
   <div class="track">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
   </div>
   <div class="track reverse">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
   </div>
   <div class="track">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
   </div>
   <div class="track reverse">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
   </div>
 </div>
 
