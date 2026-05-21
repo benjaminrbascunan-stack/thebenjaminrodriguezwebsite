@@ -35,12 +35,13 @@
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
   const scene = new THREE.Scene();
+  const isMobile = window.innerWidth <= 720;
   const camera = new THREE.PerspectiveCamera(
     34,
     window.innerWidth / window.innerHeight,
     0.1, 100
   );
-  camera.position.set(0, 0, 4.6);
+  camera.position.set(0, 0, isMobile ? 5.6 : 4.6);
 
   // ---------- lights ----------
   scene.add(new THREE.AmbientLight(0xffffff, 0.78));
@@ -245,6 +246,20 @@
   let pointerHasMoved = false;
 
   canvas.addEventListener("pointerdown", (e) => {
+    // On touch, pointermove may not fire before click — raycast on down too
+    const rect = canvas.getBoundingClientRect();
+    ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(head, false);
+    if (hits.length && hoverEnabled) {
+      const fi = hits[0].faceIndex;
+      const lbl = faceToLabel[fi];
+      if (lbl && !lbl.isPlaceholder) hoveredFace = fi;
+      else hoveredFace = -1;
+    } else {
+      hoveredFace = -1;
+    }
     isDragging = true;
     pointerHasMoved = false;
     canvas.classList.add("dragging");
@@ -399,6 +414,8 @@
 
   // ---------- resize ----------
   function resize() {
+    const mob = window.innerWidth <= 720;
+    camera.position.z = mob ? 5.6 : 4.6;
     const w = window.innerWidth;
     const h = window.innerHeight;
     renderer.setSize(w, h, false);
