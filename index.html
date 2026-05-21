@@ -60,34 +60,58 @@
     will-change: transform;
   }
 
-  /* ---------- MOBILE MARQUEE (single LED-sign line) ---------- */
+  /* ---------- INSIDE MARQUEE (desktop — middle line scrolls) ---------- */
+  .bgtype .line.l2 {
+    overflow: hidden;
+    position: relative;
+  }
+  .bgtype .line.l2 .t {
+    display: flex;
+    white-space: nowrap;
+    width: max-content;
+    transform: none !important; /* override scaleX justify for this line */
+    animation: inside-marquee 18s linear infinite;
+  }
+  .bgtype .line.l2 .t .word {
+    display: inline-block;
+    padding-right: 0.5em;
+  }
+  @keyframes inside-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ---------- MOBILE MARQUEE (4 stacked lines) ---------- */
   .bgtype-marquee {
     display: none;
     position: fixed;
-    top: 50%;
-    left: 0;
-    right: 0;
-    transform: translateY(-50%);
+    top: 0; left: 0; right: 0; bottom: 0;
     z-index: 1;
     overflow: hidden;
     pointer-events: none;
-    line-height: 0.88;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 0;
   }
   .bgtype-marquee .track {
     display: flex;
     white-space: nowrap;
     width: max-content;
-    animation: bgmarquee 22s linear infinite;
     font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
     font-weight: 900;
-    font-size: 38vh;
-    letter-spacing: -0.025em;
+    font-size: 20vw;
+    line-height: 1;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
     color: #000;
+    flex: 1;
+    align-items: center;
   }
+  .bgtype-marquee .track { animation: bgmarquee 16s linear infinite; }
+  .bgtype-marquee .track.reverse { animation-direction: reverse; }
   .bgtype-marquee .track span {
     display: inline-block;
-    padding-right: 0.4em;
+    padding-right: 0.5em;
   }
   @keyframes bgmarquee {
     from { transform: translateX(0); }
@@ -96,7 +120,7 @@
 
   @media (max-width: 720px) {
     .bgtype { display: none; }
-    .bgtype-marquee { display: block; }
+    .bgtype-marquee { display: flex; }
   }
 
   /* ---------- SCENE CANVAS ---------- */
@@ -211,15 +235,23 @@
 <!-- 1. Background Impact type — force-justified to viewport margins -->
 <div class="bgtype" aria-hidden="true">
   <div class="line l1"><span class="t">YOU ARE</span></div>
-  <div class="line l2"><span class="t">INSIDE</span></div>
+  <div class="line l2"><span class="t"><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span><span class="word">INSIDE</span></span></div>
   <div class="line l3"><span class="t">MY HEAD</span></div>
 </div>
 
-<!-- 1b. Mobile marquee — single LED-sign line that scrolls -->
+<!-- 1b. Mobile marquee — 4 stacked scrolling lines, same text, alternating direction -->
 <div class="bgtype-marquee" aria-hidden="true">
   <div class="track">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
-    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+  </div>
+  <div class="track reverse">
+    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+  </div>
+  <div class="track">
+    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
+  </div>
+  <div class="track reverse">
+    <span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;·&nbsp;</span>
   </div>
 </div>
 
@@ -246,6 +278,7 @@
     function fitJustified() {
       var lines = document.querySelectorAll('.bgtype .line');
       lines.forEach(function (line) {
+        if (line.classList.contains('l2')) return; // l2 is a marquee, skip scaleX
         var inner = line.querySelector('.t');
         if (!inner) return;
         inner.style.transform = 'scaleX(1)';
