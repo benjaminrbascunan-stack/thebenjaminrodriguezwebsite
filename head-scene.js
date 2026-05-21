@@ -1,341 +1,530 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>YOU ARE INSIDE MY HEAD NOW — TheBenjaminRodriguezWebsite</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="floating-pages.css">
-<style>
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    height: 100%;
-    overflow: hidden;
-    background: #efeeec;
-  }
-  body {
-    color: #0c0c0c;
-    font-family: Arial, Helvetica, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    user-select: none;
-  }
+// TheBenjaminRodriguezWebsite — low-poly head scene
+// Icosahedron textured with a face atlas; drag-rotate with momentum,
+// auto-rotation when idle, hover face → category label brightens, click → zoom.
 
-  .bgtype {
-    position: fixed;
-    top: 0px;
-    left: 24px;
-    right: 24px;
-    bottom: 58px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: stretch;
-    z-index: 1;
-    pointer-events: none;
-    overflow: hidden;
-    padding: 0;
-  }
-  .bgtype .line {
-    display: block;
-    width: 100%;
-    height: auto;
-    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
-    font-weight: 900;
-    /* Base font-size — the scaleX transform will stretch each line
-       to fill the container width exactly, regardless of viewport. */
-    font-size: clamp(120px, 30vh, 40vw);
-    line-height: 0.88;
-    letter-spacing: -0.025em;
-    text-transform: uppercase;
-    color: #000000;           /* absolute black */
-    white-space: nowrap;
-    flex: 0 0 auto;
-    margin: 0;
-    overflow: visible;
-  }
-  /* Inner span is what we scale — keeps line box height stable. */
-  .bgtype .line .t {
-    display: inline-block;
-    transform-origin: left center;
-    will-change: transform;
-  }
+(() => {
+  const CATEGORIES = [
+    { id: "ABOUT ME",       dir: [ 0.00, -0.45,  1.00] },  // mouth — front lower-center
+    { id: "SOUND",          dir: [-1.00,  0.00,  0.15] },  // left ear (viewer's left)
+    { id: "VIDEO",          dir: [-0.40,  0.42,  1.00] },  // left eye (viewer's left)
+    { id: "OBJECTS",        dir: [ 0.40,  0.42,  1.00] },  // right eye (viewer's right)
+    { id: "DUMMIES",        dir: [ 0.00,  1.00,  0.30] },  // top — forehead/crown
+    { id: "AUTOMATIZATION", dir: [ 1.00,  0.00,  0.15] },  // right ear (viewer's right)
+    { id: "WEB",            dir: [ 0.00, -1.00,  0.30] },  // bottom — chin
+    { id: "???",            dir: [ 0.55, -0.70, -0.80] },  // back-lower — hidden admin
+  ];
+  const FILL_LABEL = "ADD LATER";
+  const FILL_COUNT = 2;     // two placeholder labels only
 
-  /* ---------- INSIDE MARQUEE (desktop — middle line scrolls) ---------- */
-  .bgtype .line.l2 {
-    overflow: hidden;
-    position: relative;
-  }
-  /* INSIDE: scale to full width then scroll */
-  .bgtype .line.l2 .marquee-inner {
-    display: flex;
-    white-space: nowrap;
-    width: max-content;
-    animation: inside-marquee 21s linear infinite;
-    transform-origin: left center;
-  }
-  .bgtype .line.l2 .word {
-    display: inline-block;
-    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
-    font-weight: 900;
-    font-size: clamp(120px, 30vh, 40vw);
-    line-height: 0.88;
-    letter-spacing: -0.025em;
-    text-transform: uppercase;
-    color: #000;
-    white-space: nowrap;
-  }
-  @keyframes inside-marquee {
-    from { transform: scaleX(var(--sx,1)) translateX(0); }
-    to   { transform: scaleX(var(--sx,1)) translateX(calc(-100% / 8)); }
-  }
+  const canvas        = document.getElementById("scene");
+  const labelsRoot    = document.getElementById("labels");
+  const loader        = document.getElementById("loader");
+  const focusOverlay  = document.getElementById("focus-overlay");
+  const focusPanel    = document.getElementById("focus-panel");
 
-  /* ---------- MOBILE MARQUEE (4 stacked lines) ---------- */
-  .bgtype-marquee {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 1;
-    overflow: hidden;
-    pointer-events: none;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 12px 0;
-  }
-  .bgtype-marquee .track {
-    display: flex;
-    white-space: nowrap;
-    width: max-content;
-    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", "Anton", sans-serif;
-    font-weight: 900;
-    font-size: 20vw;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    color: #000;
-    flex: 1;
-    align-items: center;
-  }
-  .bgtype-marquee .track { animation: bgmarquee 16s linear infinite; }
-  .bgtype-marquee .track.reverse { animation-direction: reverse; }
-  .bgtype-marquee .track span {
-    display: inline-block;
-    padding-right: 0.5em;
-  }
-  @keyframes bgmarquee {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
-  }
+  // ---------- renderer / scene / camera ----------
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: false,        // we WANT the chunky look
+    powerPreference: "high-performance",
+    preserveDrawingBuffer: true,
+  });
+  renderer.setClearColor(0x000000, 0);
+  // Render at full resolution; the chunky look comes from detail=0 geometry + NearestFilter texture.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
-  @media (max-width: 720px) {
-    .bgtype { display: none; }
-    .bgtype-marquee { display: flex; }
-  }
+  const scene = new THREE.Scene();
+  const isMobile = window.innerWidth <= 720;
+  const camera = new THREE.PerspectiveCamera(
+    34,
+    window.innerWidth / window.innerHeight,
+    0.1, 100
+  );
+  camera.position.set(0, 0, isMobile ? 5.6 : 4.6);
 
-  /* ---------- SCENE CANVAS ---------- */
-  #scene {
-    position: fixed; inset: 0;
-    z-index: 3;
-    width: 100%; height: 100%;
-    cursor: grab;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    touch-action: none;
-  }
-  #scene.dragging { cursor: grabbing; }
+  // ---------- lights ----------
+  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const key = new THREE.DirectionalLight(0xffffff, 0.55);
+  key.position.set(2.2, 3.0, 2.4);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xfff0e8, 0.22);
+  fill.position.set(-2.0, -1.4, 1.0);
+  scene.add(fill);
+  const rim  = new THREE.DirectionalLight(0xd8dae0, 0.35);
+  rim.position.set(0, 0, -3);
+  scene.add(rim);
 
-  /* ---------- FACE LABELS ---------- */
-  #labels {
-    position: fixed; inset: 0;
-    z-index: 4;
-    pointer-events: none;
-  }
-  .face-label {
-    position: absolute;
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: 700;
-    font-size: 10px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: rgba(20,20,20,0.0);                  /* hidden by default */
-    transform: translate(-50%, -50%);
-    white-space: nowrap;
-    transition:
-      opacity 320ms cubic-bezier(.2,.7,.2,1),
-      letter-spacing 320ms cubic-bezier(.2,.7,.2,1),
-      font-size 320ms cubic-bezier(.2,.7,.2,1),
-      color 240ms ease,
-      text-shadow 240ms ease;
-    text-shadow: 0 0 1px rgba(255,255,255,0.4);
-    opacity: 0.0;
-  }
-  .face-label.visible { opacity: 0.55; color: rgba(245,240,235,0.95); }
-  .face-label.placeholder.visible { opacity: 0.35; color: rgba(255,255,255,0.7); letter-spacing: 0.16em; }
-  .face-label.active {
-    opacity: 1 !important;
-    color: #ffffff;
-    font-size: 22px;
-    letter-spacing: 0.32em;
-    text-shadow:
-      0 0 2px rgba(0,0,0,0.85),
-      0 0 12px rgba(0,0,0,0.45),
-      0 1px 0  rgba(0,0,0,0.7);
-    font-weight: 900;
-  }
-
-  /* ---------- LICENSE (only chrome) ---------- */
-  .license {
-    position: fixed;
-    left: 50%;
-    bottom: 22px;
-    transform: translateX(-50%);
-    z-index: 8;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: #0c0c0c;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  /* ---------- LOADER (temporary) ---------- */
-  #loader {
-    position: fixed; inset: 0;
-    z-index: 11;
-    background: #efeeec;
-    display: flex; align-items: center; justify-content: center;
-    font-family: Arial, sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.3em;
-    color: #0c0c0c;
-    transition: opacity 600ms ease;
-  }
-  #loader.gone { opacity: 0; pointer-events: none; }
-
-  /* ---------- FOCUS / ENTER overlay ---------- */
-  #focus-overlay {
-    position: fixed; inset: 0;
-    z-index: 9;
-    pointer-events: none;
-    background: rgba(239,238,236,0);
-    transition: background 600ms ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #focus-overlay.on { background: rgba(239,238,236,0.85); pointer-events: auto; }
-  #focus-overlay .panel {
-    font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", sans-serif;
-    font-size: clamp(80px, 22vh, 40vw);
-    line-height: 0.85;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    color: #0a0a0a;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 500ms ease, transform 700ms cubic-bezier(.2,.7,.2,1);
-    white-space: nowrap;
-  }
-  #focus-overlay.on .panel { opacity: 0.95; transform: translateY(0); }
-</style>
-</head>
-<body>
-
-<!-- 1. Background Impact type — force-justified to viewport margins -->
-<div class="bgtype" aria-hidden="true">
-  <div class="line l1"><span class="t">YOU ARE</span></div>
-  <div class="line l2"><div class="marquee-inner"><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span><span class="word">INSIDE&nbsp;&nbsp;</span></div></div>
-  <div class="line l3"><span class="t">MY HEAD</span></div>
-</div>
-
-<!-- 1b. Mobile marquee — 4 stacked scrolling lines, same text, alternating direction -->
-<div class="bgtype-marquee" aria-hidden="true">
-  <div class="track">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
-  </div>
-  <div class="track reverse">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
-  </div>
-  <div class="track">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
-  </div>
-  <div class="track reverse">
-    <span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span><span>YOU ARE INSIDE MY HEAD&nbsp;&nbsp;&nbsp;</span>
-  </div>
-</div>
-
-<!-- 2. The 3D object -->
-<canvas id="scene"></canvas>
-<div id="labels"></div>
-
-<!-- 3. License (only chrome) -->
-<div class="license">® 2026 TheBenjaminRodriguezWebsite.com all rights reserved.</div>
-
-<div id="focus-overlay">
-  <div class="panel" id="focus-panel"></div>
-</div>
-
-<div id="loader">LOADING</div>
-
-<!-- Floating editorial pages root — populated by floating-pages.js -->
-<div id="fp-root"></div>
-
-<script>
-  // Force-justify each background line to the full container width
-  // via scaleX transform. Recomputed on resize and after fonts load.
-  (function () {
-    function fitJustified() {
-      var lines = document.querySelectorAll('.bgtype .line');
-      lines.forEach(function (line) {
-        if (line.classList.contains('l2')) {
-          // For INSIDE: scale the marquee-inner so one word fills container width
-          var inner = line.querySelector('.marquee-inner');
-          var word  = line.querySelector('.word');
-          if (!inner || !word) return;
-          // Reset scale to measure natural width of one word
-          inner.style.setProperty('--sx', '1');
-          inner.style.transform = 'none';
-          var naturalWord = word.getBoundingClientRect().width;
-          var target = line.getBoundingClientRect().width;
-          if (naturalWord > 0 && target > 0) {
-            var s = target / naturalWord;
-            inner.style.setProperty('--sx', s.toFixed(4));
-            // Update animation keyframe dynamically
-            var styleId = 'inside-marquee-style';
-            var el = document.getElementById(styleId) || document.createElement('style');
-            el.id = styleId;
-            el.textContent = '@keyframes inside-marquee { from { transform: scaleX(' + s.toFixed(4) + ') translateX(0); } to { transform: scaleX(' + s.toFixed(4) + ') translateX(calc(-100% / ' + s.toFixed(4) + ')); } }';
-            if (!el.parentNode) document.head.appendChild(el);
-          }
-          return;
-        }
-        var inner = line.querySelector('.t');
-        if (!inner) return;
-        inner.style.transform = 'scaleX(1)';
-        var natural = inner.getBoundingClientRect().width;
-        var target  = line.getBoundingClientRect().width;
-        if (natural > 0 && target > 0) {
-          var s = target / natural;
-          inner.style.transform = 'scaleX(' + s.toFixed(4) + ')';
-        }
-      });
+  // ---------- head ----------
+  // Truncated-icosahedron-style polyhedron: IcosahedronGeometry detail=1 gives
+  // 80 facets — visually close to a truncated icosahedron. We replace its UVs
+  // with a proper spherical projection so the face atlas wraps cleanly
+  // (PolyhedronGeometry's default seam handling drops black-atlas-edge regions
+  // onto front-facing faces, leaving the head looking flat-black).
+  const RADIUS = 0.86;
+  const geometry = new THREE.IcosahedronGeometry(RADIUS, 1);
+  {
+    const pos = geometry.attributes.position;
+    const uvs = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const r = Math.sqrt(x*x + y*y + z*z);
+      const phi = Math.atan2(x, z);             // -π..π
+      const theta = Math.acos(y / r);           // 0..π
+      uvs[i*2]   = phi / (2 * Math.PI) + 0.5;   // 0..1, seam at z<0 / x≈0
+      uvs[i*2+1] = 1 - theta / Math.PI;         // 0=south pole, 1=north pole
     }
-    window.addEventListener('resize', fitJustified);
-    window.addEventListener('load', fitJustified);
-    document.addEventListener('DOMContentLoaded', fitJustified);
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(fitJustified);
+    // Fix triangles that cross the seam — shift small-u verts by +1 so the
+    // interpolated u stays continuous within the face.
+    for (let f = 0; f < pos.count / 3; f++) {
+      const i0 = f*3+0, i1 = f*3+1, i2 = f*3+2;
+      const u0 = uvs[i0*2], u1 = uvs[i1*2], u2 = uvs[i2*2];
+      const max = Math.max(u0, u1, u2);
+      const min = Math.min(u0, u1, u2);
+      if (max - min > 0.5) {
+        if (u0 < 0.25) uvs[i0*2] += 1;
+        if (u1 < 0.25) uvs[i1*2] += 1;
+        if (u2 < 0.25) uvs[i2*2] += 1;
+      }
     }
-    // Belt-and-braces: re-run a couple of times after load in case
-    // metrics shift slightly when Impact (system) finishes resolving.
-    setTimeout(fitJustified, 80);
-    setTimeout(fitJustified, 320);
-  })();
-</script>
+    geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+  }
+  geometry.computeVertexNormals();
 
-<script src="https://unpkg.com/three@0.156.1/build/three.min.js"></script>
-<script src="floating-pages.js"></script>
-<script src="floating-pages-content.js"></script>
-<script src="head-scene.js"></script>
+  // Per-vertex colors for hover-darken effect
+  const positions = geometry.attributes.position;
+  const vertCount = positions.count;
+  const colorArr = new Float32Array(vertCount * 3).fill(1.0);
+  geometry.setAttribute("color", new THREE.BufferAttribute(colorArr, 3));
 
-</body>
-</html>
+  // Multi-texture system — reacts to spin speed
+  const texLoader = new THREE.TextureLoader();
+  const FACE_TEXTURES = [
+    "assets/head-texture.png",   // 0: normal
+    "assets/head-dizzy-1.png",   // 1: dizzy light
+    "assets/head-dizzy-2.png",   // 2: dizzy heavy
+    "assets/head-dizzy-3.png",   // 3: about to vomit
+    "assets/head-vomit-1.png",   // 4: vomit frame 1
+    "assets/head-vomit-2.png",   // 5: vomit frame 2
+  ];
+  function makeTexture(url, onLoad) {
+    const t = texLoader.load(url, onLoad, undefined, onLoad);
+    t.minFilter = THREE.NearestFilter;
+    t.magFilter = THREE.NearestFilter;
+    t.generateMipmaps = false;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.ClampToEdgeWrapping;
+    return t;
+  }
+  let loadedCount = 0;
+  const onFirstLoad = () => {
+    loadedCount++;
+    if (loadedCount === 1) {
+      loader.classList.add("gone");
+      setTimeout(() => loader.remove(), 700);
+    }
+  };
+  const textures = FACE_TEXTURES.map((url, i) => makeTexture(url, i === 0 ? onFirstLoad : undefined));
+  const texture = textures[0]; // active texture reference (used by material)
+
+  // Spin tracking
+  let spinAccum = 0;          // accumulated spin energy
+  let currentTexIdx = 0;
+  let vomitTimer = 0;         // counts up during vomit sequence
+  let vomitFrame = 0;
+  let isVomiting = false;
+  let recoveryTimer = 0;
+
+  const material = new THREE.MeshLambertMaterial({
+    map: texture,
+    vertexColors: true,
+    flatShading: true,
+    color: 0xffffff,
+    emissive: 0x000000,
+    emissiveIntensity: 0.0,
+  });
+
+  const head = new THREE.Mesh(geometry, material);
+  scene.add(head);
+
+  // Subtle floating bob — head suspended in vacuum
+  const headBobOrigin = new THREE.Vector3(0, 0, 0);
+
+  // ---------- face data ----------
+  const faceCount = vertCount / 3;
+  const faceCenters = [];
+  const faceNormals = [];
+  for (let i = 0; i < faceCount; i++) {
+    const a = new THREE.Vector3().fromBufferAttribute(positions, i * 3 + 0);
+    const b = new THREE.Vector3().fromBufferAttribute(positions, i * 3 + 1);
+    const c = new THREE.Vector3().fromBufferAttribute(positions, i * 3 + 2);
+    const center = a.clone().add(b).add(c).multiplyScalar(1/3);
+    const normal = new THREE.Vector3()
+      .subVectors(b, a)
+      .cross(new THREE.Vector3().subVectors(c, a))
+      .normalize();
+    faceCenters.push(center);
+    faceNormals.push(normal);
+  }
+
+  // ---------- label assignment ----------
+  // For each named CATEGORY, find the face whose centroid direction (from origin)
+  // is closest to the target direction. Then pick a handful of additional
+  // farthest-point faces to receive the "ADD LATER" placeholder.
+  const namedFaces = [];     // {faceIdx, id}
+  const usedFaceIdx = new Set();
+  for (const cat of CATEGORIES) {
+    const target = new THREE.Vector3(...cat.dir).normalize();
+    let bestI = -1, bestDot = -Infinity;
+    for (let i = 0; i < faceCount; i++) {
+      if (usedFaceIdx.has(i)) continue;
+      const d = faceCenters[i].clone().normalize().dot(target);
+      if (d > bestDot) { bestDot = d; bestI = i; }
+    }
+    namedFaces.push({ faceIdx: bestI, id: cat.id, isPlaceholder: false });
+    usedFaceIdx.add(bestI);
+  }
+  // Add fill labels via farthest-point on the remaining faces (front-facing-ish only)
+  function pickFillFaces(k) {
+    const dirs = faceCenters.map((c) => c.clone().normalize());
+    const candidates = [];
+    for (let i = 0; i < faceCount; i++) {
+      if (usedFaceIdx.has(i)) continue;
+      // Only pick faces roughly on the front/upper half so they actually appear.
+      if (dirs[i].z < -0.3) continue;
+      candidates.push(i);
+    }
+    if (!candidates.length) return [];
+    const picked = [candidates[0]];
+    while (picked.length < k && picked.length < candidates.length) {
+      let bestC = -1, bestMin = -Infinity;
+      for (const c of candidates) {
+        if (picked.includes(c)) continue;
+        let minD = Infinity;
+        // also include named faces in distance check so they spread out
+        for (const p of [...picked, ...namedFaces.map(f => f.faceIdx)]) {
+          const d = 1 - dirs[c].dot(dirs[p]);
+          if (d < minD) minD = d;
+        }
+        if (minD > bestMin) { bestMin = minD; bestC = c; }
+      }
+      if (bestC < 0) break;
+      picked.push(bestC);
+    }
+    return picked;
+  }
+  const fillFaceIdxs = pickFillFaces(FILL_COUNT);
+  for (const f of fillFaceIdxs) {
+    namedFaces.push({ faceIdx: f, id: FILL_LABEL, isPlaceholder: true });
+    usedFaceIdx.add(f);
+  }
+
+  // Build label DOM
+  const faceLabels = namedFaces.map((entry) => {
+    const el = document.createElement("div");
+    el.className = "face-label" + (entry.isPlaceholder ? " placeholder" : "");
+    el.textContent = entry.id;
+    labelsRoot.appendChild(el);
+    return { el, faceIdx: entry.faceIdx, category: entry.id, isPlaceholder: entry.isPlaceholder };
+  });
+  // Reverse map: face index → label element (if labeled)
+  const faceToLabel = {};
+  for (const l of faceLabels) faceToLabel[l.faceIdx] = l;
+
+  // ---------- drag mechanics ----------
+  let isDragging = false;
+  let last = { x: 0, y: 0 };
+  let dragVel = { x: 0, y: 0 };
+  let lastMoveTs = 0;
+
+  const DAMPING = 0.93;
+  // 30% slower than the previous slow speed (0.0020 → 0.0014).
+  const AUTO_YAW = 0.0014;
+  const AUTO_PITCH = 0.00022;
+  let autoFade = 1;            // 1 = pure auto, 0 = pure post-drag
+  let pointerHasMoved = false;
+
+  canvas.addEventListener("pointerdown", (e) => {
+    // On touch, pointermove may not fire before click — raycast on down too
+    const rect = canvas.getBoundingClientRect();
+    ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(head, false);
+    if (hits.length && hoverEnabled) {
+      const fi = hits[0].faceIndex;
+      const lbl = faceToLabel[fi];
+      if (lbl && !lbl.isPlaceholder) hoveredFace = fi;
+      else hoveredFace = -1;
+    } else {
+      hoveredFace = -1;
+    }
+    isDragging = true;
+    pointerHasMoved = false;
+    canvas.classList.add("dragging");
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    last = { x: e.clientX, y: e.clientY };
+    dragVel = { x: 0, y: 0 };
+    autoFade = 0;
+  });
+
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    canvas.classList.remove("dragging");
+  }
+  window.addEventListener("pointerup",     endDrag);
+  window.addEventListener("pointercancel", endDrag);
+
+  function applyRot(yaw, pitch) {
+    // rotate around world Y for yaw, world X for pitch (intuitive trackball-ish feel)
+    const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+    head.quaternion.premultiply(qx).premultiply(qy);
+  }
+
+  // Combined pointermove: drag + raycast hover
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  let hoveredFace = -1;
+  let hoverEnabled = true;
+
+  window.addEventListener("pointermove", (e) => {
+    if (isDragging) {
+      const dx = e.clientX - last.x;
+      const dy = e.clientY - last.y;
+      if (Math.abs(dx) + Math.abs(dy) > 8) pointerHasMoved = true;
+      const SENS = 0.0065;
+      applyRot(dx * SENS, dy * SENS);
+      dragVel = { x: dx * SENS, y: dy * SENS };
+      last = { x: e.clientX, y: e.clientY };
+      lastMoveTs = performance.now();
+    }
+    // raycast hover (cheap, every move)
+    const rect = canvas.getBoundingClientRect();
+    ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(head, false);
+    if (hits.length && hoverEnabled) {
+      const fi = hits[0].faceIndex;
+      const lbl = faceToLabel[fi];
+      // Only consider a face "hovered" if it carries a real category label.
+      // Placeholder (ADD LATER) and unlabeled faces are inert.
+      if (lbl && !lbl.isPlaceholder) {
+        hoveredFace = fi;
+        canvas.style.cursor = isDragging ? "grabbing" : "pointer";
+      } else {
+        hoveredFace = -1;
+        canvas.style.cursor = isDragging ? "grabbing" : "grab";
+      }
+    } else {
+      hoveredFace = -1;
+      canvas.style.cursor = isDragging ? "grabbing" : "grab";
+    }
+  });
+
+  canvas.addEventListener("pointerleave", () => {
+    hoveredFace = -1;
+  });
+
+  // Click/tap → if on a labeled face, enter category
+  canvas.addEventListener("click", (e) => {
+    if (pointerHasMoved) return;
+    // On touch, hoveredFace may not be set — re-raycast here
+    if (hoveredFace < 0) {
+      const rect = canvas.getBoundingClientRect();
+      ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(ndc, camera);
+      const hits = raycaster.intersectObject(head, false);
+      if (hits.length) hoveredFace = hits[0].faceIndex;
+    }
+    if (hoveredFace < 0 || !(hoveredFace in faceToLabel)) return;
+    const lbl = faceToLabel[hoveredFace];
+    if (lbl.isPlaceholder) return;
+    enterCategory(lbl.category);
+  });
+
+  function enterCategory(name) {
+    if (window.FloatingPages && typeof window.FloatingPages.open === "function") {
+      window.FloatingPages.open(name);
+      return;
+    }
+    // Fallback to the legacy overlay if the floating-pages system isn't loaded.
+    focusPanel.textContent = name;
+    focusOverlay.classList.add("on");
+    hoverEnabled = false;
+  }
+  function exitCategory() {
+    focusOverlay.classList.remove("on");
+    hoverEnabled = true;
+  }
+  // Floating-pages dispatches custom events when it closes — re-enable hover.
+  document.addEventListener("fp:close", () => { hoverEnabled = true; });
+  document.addEventListener("fp:open",  () => { hoverEnabled = false; });
+  window.addEventListener("keydown", exitCategory);
+  focusOverlay.addEventListener("click", exitCategory);
+
+  // ---------- per-frame color update (hover darken) ----------
+  function updateColors() {
+    const HOVER_V = 0.42;
+    for (let i = 0; i < faceCount; i++) {
+      const v = (i === hoveredFace) ? HOVER_V : 1.0;
+      for (let j = 0; j < 3; j++) {
+        const o = (i * 3 + j) * 3;
+        colorArr[o]   = v;
+        colorArr[o+1] = v;
+        colorArr[o+2] = v;
+      }
+    }
+    geometry.attributes.color.needsUpdate = true;
+  }
+
+  // ---------- per-frame label positioning ----------
+  const tmpVec = new THREE.Vector3();
+  const tmpNormal = new THREE.Vector3();
+  const camWorldPos = new THREE.Vector3();
+  function updateLabels() {
+    camera.getWorldPosition(camWorldPos);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    for (const l of faceLabels) {
+      const i = l.faceIdx;
+      // world position of face center
+      tmpVec.copy(faceCenters[i]).applyMatrix4(head.matrixWorld);
+      // world normal
+      tmpNormal.copy(faceNormals[i]).applyQuaternion(head.quaternion);
+      // outward direction from camera to face
+      const toFace = tmpVec.clone().sub(camWorldPos).normalize();
+      // dot of inward (-toFace) with face normal: positive when face is facing camera
+      const facing = -toFace.dot(tmpNormal);
+      const visible = facing > 0.05;
+
+      // project to screen
+      const proj = tmpVec.clone().project(camera);
+      const x = (proj.x + 1) * 0.5 * W;
+      const y = (1 - proj.y) * 0.5 * H;
+      l.el.style.left = `${x}px`;
+      l.el.style.top  = `${y}px`;
+
+      // visibility / opacity by facing
+      if (visible) {
+        const active = (i === hoveredFace);
+        l.el.classList.toggle("visible", !active);
+        l.el.classList.toggle("active", active);
+      } else {
+        l.el.classList.remove("visible");
+        l.el.classList.remove("active");
+      }
+    }
+  }
+
+  // ---------- resize ----------
+  function resize() {
+    const mob = window.innerWidth <= 720;
+    camera.position.z = mob ? 5.6 : 4.6;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // ---------- texture switcher ----------
+  function setTexture(idx) {
+    if (currentTexIdx === idx) return;
+    currentTexIdx = idx;
+    material.map = textures[idx];
+    material.needsUpdate = true;
+  }
+
+  // Thresholds for spin energy accumulator
+  const SPIN_DIZZY1  = 0.8;   // → cara 2
+  const SPIN_DIZZY2  = 2.2;   // → cara 3
+  const SPIN_VOMIT   = 4.0;   // → trigger vomit sequence
+  const SPIN_DECAY   = 1.4;   // how fast energy drains when not spinning
+  const SPIN_GAIN    = 18.0;  // how fast energy builds from drag speed
+
+  // ---------- main loop ----------
+  const clock = new THREE.Clock();
+  let t = 0;
+  function animate() {
+    const dt = clock.getDelta();
+    t += dt;
+
+    // Subtle floating bob (head suspended)
+    head.position.y = Math.sin(t * 0.6) * 0.045;
+    head.position.x = Math.cos(t * 0.4) * 0.025;
+
+    // Current drag speed
+    const dragSpeed = isDragging ? Math.hypot(dragVel.x, dragVel.y) : 0;
+
+    if (isDragging) {
+      // rotation handled in pointermove
+      spinAccum += dragSpeed * SPIN_GAIN * dt;
+    } else {
+      // momentum
+      applyRot(dragVel.x, dragVel.y);
+      dragVel.x *= DAMPING;
+      dragVel.y *= DAMPING;
+
+      // blend back to auto rotation as drag velocity decays
+      const speed = Math.hypot(dragVel.x, dragVel.y);
+      spinAccum += speed * SPIN_GAIN * dt * 0.5; // momentum also builds spin
+
+      autoFade = Math.min(1, autoFade + dt * 0.25);
+      const blend = Math.max(autoFade, 1 - speed * 30);
+      applyRot(AUTO_YAW * blend, AUTO_PITCH * blend);
+    }
+
+    // Vomit sequence state machine
+    if (isVomiting) {
+      vomitTimer += dt;
+      // Sequence: cara4 (about to) → cara5 → cara6 → cara5 → cara6 → back to normal
+      if (vomitTimer < 0.6) {
+        setTexture(3); // cara 4: about to vomit (hold longer for anticipation)
+      } else if (vomitTimer < 1.2) {
+        setTexture(4); // cara 5: vomit frame 1
+      } else if (vomitTimer < 1.8) {
+        setTexture(5); // cara 6: vomit frame 2
+      } else if (vomitTimer < 2.3) {
+        setTexture(4); // cara 5 again
+      } else if (vomitTimer < 2.8) {
+        setTexture(5); // cara 6 again
+      } else {
+        // vomit done — reset everything
+        isVomiting = false;
+        vomitTimer = 0;
+        spinAccum = 0;
+        setTexture(0);
+      }
+    } else {
+      // Recovery: drain spin energy over time
+      spinAccum = Math.max(0, spinAccum - SPIN_DECAY * dt);
+
+      // Trigger vomit ONLY when user releases (not dragging) and hit max energy
+      if (!isDragging && spinAccum >= SPIN_VOMIT) {
+        isVomiting = true;
+        vomitTimer = 0;
+        setTexture(3);
+      } else if (spinAccum >= SPIN_DIZZY2) {
+        setTexture(2); // cara 3: heavy dizzy
+      } else if (spinAccum >= SPIN_DIZZY1) {
+        setTexture(1); // cara 2: light dizzy
+      } else {
+        setTexture(0); // cara 1: normal
+      }
+    }
+
+    updateColors();
+    renderer.render(scene, camera);
+    updateLabels();
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
